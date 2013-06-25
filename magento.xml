@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <menuitem id="menu_magento" name="Magento" sequence="70" groups="base.group_user"/>
+        <menuitem id="menu_magento_config" name="Configuration" sequence="50" parent="menu_magento" groups="base.group_user"/>
+
+        <menuitem id="menu_websites" parent="menu_magento_config" sequence="10" groups="base.group_user"/>
+        <menuitem id="menu_stores" parent="menu_magento_config" sequence="15" groups="base.group_user"/>
+        <menuitem id="menu_store_views" parent="menu_magento_config" sequence="20" groups="base.group_user"/>
+
+    </data>
+</openerp>
