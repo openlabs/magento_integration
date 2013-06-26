@@ -5,6 +5,63 @@
         <menuitem id="menu_magento" name="Magento" sequence="70" groups="base.group_user"/>
         <menuitem id="menu_magento_config" name="Configuration" sequence="50" parent="menu_magento" groups="base.group_user"/>
 
+        <record id="magento_instance_tree_view" model="ir.ui.view">
+            <field name="name">magento.instance.tree</field>
+            <field name="model">magento.instance</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Magento Instances">
+                    <field name="name"/>
+                    <field name="url"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="magento_instance_form_view" model="ir.ui.view">
+            <field name="name">magento.instance.form</field>
+            <field name="model">magento.instance</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Magento Instance" version="7.0">
+                    <sheet>
+                        <div class="oe_title">
+                            <div class="oe_edit_only">
+                                <label for="name" string="Name"/>
+                            </div>
+                            <h1>
+                                <field name="name"/>
+                            </h1>
+                        </div>
+                        <div class="oe_clear"/>
+                        <div class="oe_horizontal_separator oe_clear ">
+                            API Settings
+                        </div>
+                        <label for="url"/>
+                        <h3><field name="url" colspan="4"/></h3>
+                        <group>
+                            <group>
+                                <label for="api_user"/>
+                                <h3><field name="api_user"/></h3>
+                            </group>
+                            <group>
+                                <label for="api_key"/>
+                                <h3><field name="api_key"/></h3>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="magento_instances" model="ir.actions.act_window">
+            <field name="name">Magento Instances</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">magento.instance</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="magento_instances" id="menu_instances" parent="menu_magento_config" sequence="5" groups="base.group_user"/>
         <menuitem id="menu_websites" parent="menu_magento_config" sequence="10" groups="base.group_user"/>
         <menuitem id="menu_stores" parent="menu_magento_config" sequence="15" groups="base.group_user"/>
         <menuitem id="menu_store_views" parent="menu_magento_config" sequence="20" groups="base.group_user"/>
