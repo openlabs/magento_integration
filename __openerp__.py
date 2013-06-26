@@ -23,6 +23,7 @@ This will import the following:
     """,
     'data': [
         'wizard/test_connection.xml',
+        'wizard/import_websites.xml',
         'magento.xml',
     ],
     'css': [],
