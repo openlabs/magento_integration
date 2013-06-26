@@ -2,9 +2,12 @@
 <openerp>
     <data>
 
-        <menuitem id="menu_magento" name="Magento" sequence="70" groups="base.group_user"/>
-        <menuitem id="menu_magento_config" name="Configuration" sequence="50" parent="menu_magento" groups="base.group_user"/>
+        <menuitem id="menu_magento" name="Magento"
+            sequence="70" groups="base.group_user"/>
+        <menuitem id="menu_magento_config" name="Configuration" sequence="50"
+            parent="menu_magento" groups="base.group_user"/>
 
+        <!--Instance-->
         <record id="magento_instance_tree_view" model="ir.ui.view">
             <field name="name">magento.instance.tree</field>
             <field name="model">magento.instance</field>
@@ -39,6 +42,8 @@
                             <separator colspan="4"/>
                             <label for="company"/>
                             <h3><field name="company"/></h3>
+                            <label for="active"/>
+                            <h3><field name="active"/></h3>
                         </div>
                         <div class="oe_clear"/>
                         <div class="oe_horizontal_separator oe_clear ">
@@ -56,6 +61,13 @@
                                 <h3><field name="api_key"/></h3>
                             </group>
                         </group>
+                        <notebook>
+                            <page string="Websites" groups="base.group_user">
+                                <h3>
+                                    <field name="websites"/>
+                                </h3>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -68,10 +80,214 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-        <menuitem action="magento_instances" id="menu_instances" parent="menu_magento_config" sequence="5" groups="base.group_user"/>
-        <menuitem id="menu_websites" parent="menu_magento_config" sequence="10" groups="base.group_user"/>
-        <menuitem id="menu_stores" parent="menu_magento_config" sequence="15" groups="base.group_user"/>
-        <menuitem id="menu_store_views" parent="menu_magento_config" sequence="20" groups="base.group_user"/>
+        <menuitem action="magento_instances" id="menu_instances"
+            parent="menu_magento_config" sequence="5" groups="base.group_user"/>
+
+        <!-- Website -->
+        <record id="instance_website_tree_view" model="ir.ui.view">
+            <field name="name">magento.instance.website.tree</field>
+            <field name="model">magento.instance.website</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Instance Website">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="instance"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="instance_website_form_view" model="ir.ui.view">
+            <field name="name">magento.instance.website.form</field>
+            <field name="model">magento.instance.website</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Website" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <h2>
+                                    <label for="name" string="Name"/>
+                                </h2>
+                            </group>
+                            <group>
+                                <h2>
+                                  <label for="code"/>
+                                </h2>
+                            </group>
+                            <group>
+                                <h1>
+                                    <field name="name"/>
+                                </h1>
+                            </group>
+                            <group>
+                                <h1>
+                                    <field name="code"/>
+                                </h1>
+                            </group>
+                            <group>
+                                <label for="instance"/>
+                                <h3>
+                                    <field name="instance"/>
+                                </h3>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Stores" groups="base.group_user">
+                                <h3>
+                                    <field name="stores"/>
+                                </h3>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="instance_website" model="ir.actions.act_window">
+            <field name="name">Website</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">magento.instance.website</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="instance_website" id="menu_websites"
+            parent="menu_magento_config" sequence="10"
+            groups="base.group_user"/>
+
+        <!--Store-->
+        <record id="website_store_tree_view" model="ir.ui.view">
+            <field name="name">magento.website.store.tree</field>
+            <field name="model">magento.website.store</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Website Store">
+                    <field name="name"/>
+                    <field name="website"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="website_store_form_view" model="ir.ui.view">
+            <field name="name">magento.website.store.form</field>
+            <field name="model">magento.website.store</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Website Store" version="7.0" col="6">
+                    <sheet>
+                        <group>
+                            <group>
+                                <h2>
+                                    <label for="name" string="Name"/>
+                                </h2>
+                            </group>
+                            <div class="oe_clear"/>
+                            <group>
+                                <h1>
+                                    <field name="name"/>
+                                </h1>
+                            </group>
+                            <div class="oe_clear"/>
+                            <group>
+                                <label for="website"/>
+                                <h3>
+                                    <field name="website" colspan="2"/>
+                                </h3>
+                            </group>
+                            <group>
+                                <label for="instance"/>
+                                <h3>
+                                    <field name="instance" colspan="2"/>
+                                </h3>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Store Views" groups="base.group_user">
+                                <h3>
+                                    <field name="store_views" readonly="1"/>
+                                </h3>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="website_store" model="ir.actions.act_window">
+            <field name="name">Website Store</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">magento.website.store</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="website_store" id="menu_stores"
+            parent="menu_magento_config" sequence="15"
+            groups="base.group_user"/>
+
+
+        <!--Store view-->
+        <record id="store_view_tree_view" model="ir.ui.view">
+            <field name="name">magento.store.store_view.tree</field>
+            <field name="model">magento.store.store_view</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Store View">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="store"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="store_view_form_view" model="ir.ui.view">
+            <field name="name">magento.store.store_view.form</field>
+            <field name="model">magento.store.store_view</field>
+            <field eval="7" name="priority"/>
+            <field name="arch" type="xml">
+                <form string="Store View" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <h2><label for="name" string="Name"/></h2>
+                            </group>
+                            <group>
+                                <h2><label for="code" string="Code"/></h2>
+                            </group>
+                            <group>
+                                <h1>
+                                  <field name="name"/>
+                                </h1>
+                             </group>
+                             <group>
+                                <h1>
+                                  <field name="code"/>
+                                </h1>
+                            </group>
+                            <group>
+                                <label for="store"/>
+                                <h3><field name="store"/></h3>
+                            </group>
+                            <group>
+                                <label for="instance"/>
+                                <h3><field name="instance"/></h3>
+                            </group>
+                            <group>
+                                <label for="website"/>
+                                <h3><field name="website"/></h3>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="store_view" model="ir.actions.act_window">
+            <field name="name">Store View</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">magento.store.store_view</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem action="store_view" id="menu_store_views"
+            parent="menu_magento_config" sequence="20"
+            groups="base.group_user"/>
 
     </data>
 </openerp>
