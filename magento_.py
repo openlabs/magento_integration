@@ -48,6 +48,7 @@ class InstanceWebsite(osv.Model):
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
         code=fields.char('Code', required=True, size=50),
+        magento_id=fields.integer('Magento ID'),
         instance=fields.many2one(
             'magento.instance', 'Instance', required=True,
         ),
@@ -57,8 +58,8 @@ class InstanceWebsite(osv.Model):
     )
 
     _sql_constraints = [(
-        'code_instance_unique', 'unique(code, instance)',
-        'Code of a website must be unique in an instance'
+        'magento_id_instance_unique', 'unique(magento_id, instance)',
+        'A website must be unique in an instance'
     )]
 
 
@@ -74,6 +75,7 @@ class WebsiteStore(osv.Model):
 
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
+        magento_id=fields.integer('Magento ID'),
         website=fields.many2one(
             'magento.instance.website', 'Website', required=True,
         ),
@@ -85,6 +87,11 @@ class WebsiteStore(osv.Model):
             'magento.store.store_view', 'store', 'Store Views'
         ),
     )
+
+    _sql_constraints = [(
+        'magento_id_website_unique', 'unique(magento_id, website)',
+        'A store must be unique in a website'
+    )]
 
 
 class WebsiteStoreView(osv.Model):
@@ -100,6 +107,7 @@ class WebsiteStoreView(osv.Model):
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
         code=fields.char('Code', required=True, size=50),
+        magento_id=fields.integer('Magento ID'),
         store=fields.many2one(
             'magento.website.store', 'Store', required=True,
         ),
@@ -114,6 +122,6 @@ class WebsiteStoreView(osv.Model):
     )
 
     _sql_constraints = [(
-        'code_store_unique', 'unique(code, store)',
-        'Code of a storeview must be unique in a store'
+        'magento_id_store_unique', 'unique(magento_id, store)',
+        'A storeview must be unique in a store'
     )]
