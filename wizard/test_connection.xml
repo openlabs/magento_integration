@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_test_connection" model="ir.ui.view">
+            <field name="name">magento.instance.test_connection.form</field>
+            <field name="model">magento.instance.test_connection</field>
+            <field name="arch" type="xml">
+                <form string="Test Connection" version="7.0">
+                    <field name="id" invisible="1"/>
+                    <group>
+                        <h3 class="oe_grey">
+                            Test connection with magento successful
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Close" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_test_connection" model="ir.actions.act_window">
+            <field name="name">Test Connection</field>
+            <field name="res_model">magento.instance.test_connection</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_test_connection"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>

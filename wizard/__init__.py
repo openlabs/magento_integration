@@ -6,6 +6,4 @@
     :license: AGPLv3, see LICENSE for more details
 '''
 # flake8: noqa
-import magento_
-
-import wizard
+import test_connection

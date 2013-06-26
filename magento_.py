@@ -14,7 +14,7 @@ class Instance(osv.Model):
     Refers to a magento installation identifiable via url, api_user and api_key
     """
     _name = 'magento.instance'
-    _description = __doc__
+    _description = "Magento Instance"
 
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
@@ -52,7 +52,7 @@ class InstanceWebsite(osv.Model):
             'magento.instance', 'Instance', required=True,
         ),
         stores=fields.one2many(
-            'magento.website.stores', 'website', 'Stores'
+            'magento.website.store', 'website', 'Stores'
         )
     )
 
@@ -94,7 +94,7 @@ class WebsiteStoreView(osv.Model):
     It allows for multiple presentations of a store. Most implementations
     use store views for different languages.
     """
-    _name = 'magento.website.store_view'
+    _name = 'magento.store.store_view'
     _description = "Magento Website Store View"
 
     _columns = dict(
