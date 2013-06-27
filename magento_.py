@@ -22,8 +22,12 @@ class Instance(osv.Model):
         api_user=fields.char('API User', required=True, size=50),
         api_key=fields.char('API Password / Key', required=True, size=100),
         active=fields.boolean('Active'),
+        company=fields.many2one(
+            'res.company', 'Company', required=True
+        ),
         websites=fields.one2many(
-            'magento.instance.website', 'instance', 'Websites'
+            'magento.instance.website', 'instance', 'Websites',
+            readonly=True,
         )
     )
 
@@ -47,13 +51,15 @@ class InstanceWebsite(osv.Model):
 
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
-        code=fields.char('Code', required=True, size=50),
-        magento_id=fields.integer('Magento ID'),
+        code=fields.char('Code', required=True, size=50, readonly=True,),
+        magento_id=fields.integer('Magento ID', readonly=True,),
         instance=fields.many2one(
             'magento.instance', 'Instance', required=True,
+            readonly=True,
         ),
         stores=fields.one2many(
-            'magento.website.store', 'website', 'Stores'
+            'magento.website.store', 'website', 'Stores',
+            readonly=True,
         )
     )
 
@@ -75,16 +81,17 @@ class WebsiteStore(osv.Model):
 
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
-        magento_id=fields.integer('Magento ID'),
+        magento_id=fields.integer('Magento ID', readonly=True,),
         website=fields.many2one(
             'magento.instance.website', 'Website', required=True,
+            readonly=True,
         ),
         instance=fields.related(
             'website', 'instance', type='many2one',
-            relation='magento.instance', string='Instance'
+            relation='magento.instance', string='Instance', readonly=True,
         ),
         store_views=fields.one2many(
-            'magento.store.store_view', 'store', 'Store Views'
+            'magento.store.store_view', 'store', 'Store Views', readonly=True,
         ),
     )
 
@@ -106,18 +113,19 @@ class WebsiteStoreView(osv.Model):
 
     _columns = dict(
         name=fields.char('Name', required=True, size=50),
-        code=fields.char('Code', required=True, size=50),
-        magento_id=fields.integer('Magento ID'),
+        code=fields.char('Code', required=True, size=50, readonly=True,),
+        magento_id=fields.integer('Magento ID', readonly=True,),
         store=fields.many2one(
-            'magento.website.store', 'Store', required=True,
+            'magento.website.store', 'Store', required=True, readonly=True,
         ),
         instance=fields.related(
             'website', 'instance', type='many2one',
-            relation='magento.instance', string='Instance'
+            relation='magento.instance', string='Instance', readonly=True,
         ),
         website=fields.related(
             'store', 'website', type='many2one',
-            relation='magento.instance.website', string='Website'
+            relation='magento.instance.website', string='Website',
+            readonly=True,
         )
     )
 
