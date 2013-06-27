@@ -21,7 +21,10 @@ This will import the following:
 * Addresses
 * Orders
     """,
-    'data': ['magento.xml'],
+    'data': [
+        'wizard/test_connection.xml',
+        'magento.xml',
+    ],
     'css': [],
     'images': [],
     'demo': [],
