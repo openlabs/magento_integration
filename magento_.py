@@ -22,6 +22,9 @@ class Instance(osv.Model):
         api_user=fields.char('API User', required=True, size=50),
         api_key=fields.char('API Password / Key', required=True, size=100),
         active=fields.boolean('Active'),
+        company=fields.many2one(
+            'res.company', 'Company', required=True
+        ),
         websites=fields.one2many(
             'magento.instance.website', 'instance', 'Websites'
         )

@@ -36,6 +36,9 @@
                             <h1>
                                 <field name="name"/>
                             </h1>
+                            <separator colspan="4"/>
+                            <label for="company"/>
+                            <h3><field name="company"/></h3>
                         </div>
                         <div class="oe_clear"/>
                         <div class="oe_horizontal_separator oe_clear ">
