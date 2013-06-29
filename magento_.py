@@ -86,6 +86,38 @@ class InstanceWebsite(osv.Model):
         'A website must be unique in an instance'
     )]
 
+    def find_or_create(self, cursor, user, instance_id, values, context):
+        """
+        Looks for the website whose `values` are sent by magento against
+        the instance with `instance_id` in openerp.
+        If a record exists for this, return that else create a new one and
+        return
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param instance_id: ID of instance
+        :param values: Dictionary of values for a website sent by magento
+        :return: ID of record created/found
+        """
+        website_ids = self.search(
+            cursor, user, [
+                ('instance', '=', instance_id),
+                ('magento_id', '=', values['website_id'])
+            ], context=context
+        )
+
+        if website_ids:
+            return website_ids[0]
+
+        return self.create(
+            cursor, user, {
+                'name': values['name'],
+                'code': values['code'],
+                'instance': instance_id,
+                'magento_id': values['website_id'],
+            }, context=context
+        )
+
 
 class WebsiteStore(osv.Model):
     """Magento Website Store or Store view groups
@@ -121,6 +153,37 @@ class WebsiteStore(osv.Model):
         'magento_id_website_unique', 'unique(magento_id, website)',
         'A store must be unique in a website'
     )]
+
+    def find_or_create(self, cursor, user, website_id, values, context):
+        """
+        Looks for the store whose `values` are sent by magento against the
+        website with `website_id` in openerp.
+        If a record exists for this, return that else create a new one and
+        return
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param website_id: ID of website
+        :param values: Dictionary of values for a store sent by magento
+        :return: ID of record created/found
+        """
+        store_ids = self.search(
+            cursor, user, [
+                ('website', '=', website_id),
+                ('magento_id', '=', values['group_id'])
+            ], context=context
+        )
+
+        if store_ids:
+            return store_ids[0]
+
+        return self.create(
+            cursor, user, {
+                'name': values['name'],
+                'magento_id': values['group_id'],
+                'website': website_id,
+            }, context=context
+        )
 
 
 class WebsiteStoreView(osv.Model):
@@ -159,3 +222,35 @@ class WebsiteStoreView(osv.Model):
         'magento_id_store_unique', 'unique(magento_id, store)',
         'A storeview must be unique in a store'
     )]
+
+    def find_or_create(self, cursor, user, store_id, values, context):
+        """
+        Looks for the store view whose `values` are sent by magento against
+        the store with `store_id` in openerp.
+        If a record exists for this, return that else create a new one and
+        return
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param store_id: ID of store
+        :param values: Dictionary of values for store view sent by magento
+        :return: ID of record created/found
+        """
+        store_view_ids = self.search(
+            cursor, user, [
+                ('store', '=', store_id),
+                ('magento_id', '=', values['store_id'])
+            ], context=context
+        )
+
+        if store_view_ids:
+            return store_view_ids[0]
+
+        return self.create(
+            cursor, user, {
+                'name': values['name'],
+                'code': values['code'],
+                'store': store_id,
+                'magento_id': values['store_id']
+            }, context=context
+        )

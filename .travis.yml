@@ -20,3 +20,6 @@ install:
 script:
   - python setup.py test_on_travis
   - flake8 .
+notifications:
+  email:
+    - ci-notify@openlabs.co.in
