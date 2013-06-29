@@ -9,12 +9,14 @@
 """
 import unittest
 from .test_models import TestModels
+from .test_country import TestCountry
 
 
 def suite():
     _suite = unittest.TestSuite()
     _suite.addTests([
         unittest.TestLoader().loadTestsFromTestCase(TestModels),
+        unittest.TestLoader().loadTestsFromTestCase(TestCountry),
     ])
     return _suite
 
