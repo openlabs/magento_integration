@@ -40,21 +40,21 @@ class TestConnection(osv.TransientModel):
 
         instance_obj = Pool.get('magento.instance')
 
-        for instance in instance_obj.browse(
-            cursor, user, context.get('active_ids'), context
-        ):
-            try:
-                with magento.API(
-                    instance.url, instance.api_user, instance.api_key
-                ):
-                    return
-            except (
-                xmlrpclib.Fault, IOError,
-                xmlrpclib.ProtocolError, socket.timeout
+        instance = instance_obj.browse(
+            cursor, user, context.get('active_id'), context
+        )
+        try:
+            with magento.API(
+                instance.url, instance.api_user, instance.api_key
             ):
-                raise osv.except_osv(
-                    _('Incorrect API Settings!'),
-                    _('Please check and correct the API settings on instance.')
-                )
+                return
+        except (
+            xmlrpclib.Fault, IOError,
+            xmlrpclib.ProtocolError, socket.timeout
+        ):
+            raise osv.except_osv(
+                _('Incorrect API Settings!'),
+                _('Please check and correct the API settings on instance.')
+            )
 
 TestConnection()
