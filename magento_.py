@@ -31,8 +31,22 @@ class Instance(osv.Model):
         )
     )
 
+    def default_company(self, cursor, user, context):
+        """Return default company
+
+        :param cursor: Database cursor
+        :param user: Current User ID
+        :param context: Application context
+        """
+        company_obj = self.pool.get('res.company')
+
+        return company_obj._company_default_get(
+            cursor, user, 'magento.instance', context=context
+        )
+
     _defaults = dict(
         active=lambda *a: 1,
+        company=default_company,
     )
 
     _sql_constraints = [
@@ -57,10 +71,14 @@ class InstanceWebsite(osv.Model):
             'magento.instance', 'Instance', required=True,
             readonly=True,
         ),
+        company=fields.related(
+            'instance', 'company', type='many2one', relation='res.company',
+            string='Company', readonly=True
+        ),
         stores=fields.one2many(
             'magento.website.store', 'website', 'Stores',
             readonly=True,
-        )
+        ),
     )
 
     _sql_constraints = [(
@@ -89,6 +107,10 @@ class WebsiteStore(osv.Model):
         instance=fields.related(
             'website', 'instance', type='many2one',
             relation='magento.instance', string='Instance', readonly=True,
+        ),
+        company=fields.related(
+            'website', 'company', type='many2one', relation='res.company',
+            string='Company', readonly=True
         ),
         store_views=fields.one2many(
             'magento.store.store_view', 'store', 'Store Views', readonly=True,
@@ -119,14 +141,18 @@ class WebsiteStoreView(osv.Model):
             'magento.website.store', 'Store', required=True, readonly=True,
         ),
         instance=fields.related(
-            'website', 'instance', type='many2one',
+            'store', 'instance', type='many2one',
             relation='magento.instance', string='Instance', readonly=True,
         ),
         website=fields.related(
             'store', 'website', type='many2one',
             relation='magento.instance.website', string='Website',
             readonly=True,
-        )
+        ),
+        company=fields.related(
+            'store', 'company', type='many2one', relation='res.company',
+            string='Company', readonly=True
+        ),
     )
 
     _sql_constraints = [(

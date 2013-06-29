@@ -1,7 +1,22 @@
 language: python
 python:
   - "2.7"
+virtualenv:
+  system_site_packages: true
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database myapp_test;' -U postgres
+  - cd ..
+  - ln -s magento-integration magento_integration
+  - cd magento-integration
 install:
+# OpenERP does not specify the version of pyparsing and the later
+# version only work with py3k
+  - pip install "pyparsing==1.5.7"
   - pip install flake8
+  - ./install_nightly.sh
+  - python setup.py install
 script:
+  - python setup.py test_on_travis
   - flake8 .
