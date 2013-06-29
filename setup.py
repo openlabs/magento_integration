@@ -55,6 +55,7 @@ setup(
     install_requires=[
         'itsbroken',
         'magento',
+        'pycountry',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
