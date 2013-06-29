@@ -127,9 +127,9 @@
                             </group>
                             <group>
                                 <label for="instance"/>
-                                <h3>
-                                    <field name="instance"/>
-                                </h3>
+                                <field name="instance"/>
+                                <label for="company"/>
+                                <field name="company"/>
                             </group>
                         </group>
                         <notebook>
@@ -197,6 +197,12 @@
                                 <label for="instance"/>
                                 <h3>
                                     <field name="instance" colspan="2"/>
+                                </h3>
+                            </group>
+                            <group>
+                                <label for="company"/>
+                                <h3>
+                                    <field name="company" colspan="2"/>
                                 </h3>
                             </group>
                         </group>
@@ -272,6 +278,10 @@
                             <group>
                                 <label for="website"/>
                                 <h3><field name="website"/></h3>
+                            </group>
+                            <group>
+                                <label for="company"/>
+                                <h3><field name="company"/></h3>
                             </group>
                         </group>
                     </sheet>
