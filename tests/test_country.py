@@ -24,19 +24,20 @@ class TestCountry(TestBase):
         """
         Tests if country can be searched using magento code
         """
+        country_obj = POOL.get('res.country')
+
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
-            self.country_obj = POOL.get('res.country')
 
             code = 'US'
 
-            country_id = self.country_obj.search(
+            country_id, = country_obj.search(
                 txn.cursor, txn.user, [
                     ('code', '=', code)
                 ], context=txn.context
-            )[0]
+            )
 
             self.assertEqual(
-                self.country_obj.search_using_magento_code(
+                country_obj.search_using_magento_code(
                     txn.cursor, txn.user, code, txn.context
                 ).id,
                 country_id
@@ -46,15 +47,85 @@ class TestCountry(TestBase):
         """
         Tests if error is raised for searching country with invalid code
         """
+        country_obj = POOL.get('res.country')
+
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
-            self.country_obj = POOL.get('res.country')
 
             code = 'abc'
 
             with self.assertRaises(Exception):
-                self.country_obj.search_using_magento_code(
+                country_obj.search_using_magento_code(
                     txn.cursor, txn.user, code, txn.context
                 )
+
+    def test_0030_search_state_using_magento_region(self):
+        """
+        Tests if state can be searched using magento region
+        """
+        state_obj = POOL.get('res.country.state')
+        country_obj = POOL.get('res.country')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            country = country_obj.search_using_magento_code(
+                txn.cursor, txn.user, 'US', txn.context
+            )
+            state_ids = state_obj.search(
+                txn.cursor, txn.user, [
+                    ('name', '=', 'Florida'),
+                    ('country_id', '=', country.id),
+                ], context=txn.context
+            )
+            self.assertTrue(state_ids)
+            self.assertEqual(len(state_ids), 1)
+
+            # Create state and it should return id of existing record instead
+            # of creating new one
+            state = state_obj.find_or_create_using_magento_region(
+                txn.cursor, txn.user, country, 'Florida', txn.context
+            )
+
+            self.assertEqual(state.id, state_ids[0])
+
+            state_ids = state_obj.search(
+                txn.cursor, txn.user, [
+                    ('name', '=', 'Florida'),
+                    ('country_id', '=', country.id),
+                ], context=txn.context
+            )
+            self.assertEqual(len(state_ids), 1)
+
+    def test_0040_create_state_using_magento_region(self):
+        """
+        Tests if state is being created when not found using magento region
+        """
+        state_obj = POOL.get('res.country.state')
+        country_obj = POOL.get('res.country')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            country = country_obj.search_using_magento_code(
+                txn.cursor, txn.user, 'IN', txn.context
+            )
+
+            states = state_obj.search(
+                txn.cursor, txn.user, [
+                    ('name', '=', 'UP'),
+                    ('country_id', '=', country.id),
+                ], context=txn.context
+            )
+            self.assertEqual(len(states), 0)
+
+            # Create state
+            state_obj.find_or_create_using_magento_region(
+                txn.cursor, txn.user, country, 'UP', txn.context
+            )
+
+            states = state_obj.search(
+                txn.cursor, txn.user, [
+                    ('name', '=', 'UP'),
+                    ('country_id', '=', country.id),
+                ], context=txn.context
+            )
+            self.assertEqual(len(states), 1)
 
 
 def suite():
