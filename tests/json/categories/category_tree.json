@@ -1,0 +1,251 @@
+{
+    "category_id": "1", 
+    "children": [
+        {
+            "category_id": "3", 
+            "children": [
+                {
+                    "category_id": "10", 
+                    "children": [
+                        {
+                            "category_id": "22", 
+                            "children": [], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Living Room", 
+                            "parent_id": "10", 
+                            "position": "22"
+                        }, 
+                        {
+                            "category_id": "23", 
+                            "children": [], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Bedroom", 
+                            "parent_id": "10", 
+                            "position": "23"
+                        }
+                    ], 
+                    "is_active": "1", 
+                    "level": "2", 
+                    "name": "Furniture", 
+                    "parent_id": "3", 
+                    "position": "10"
+                }, 
+                {
+                    "category_id": "13", 
+                    "children": [
+                        {
+                            "category_id": "8", 
+                            "children": [], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Cell Phones", 
+                            "parent_id": "13", 
+                            "position": "8"
+                        }, 
+                        {
+                            "category_id": "12", 
+                            "children": [
+                                {
+                                    "category_id": "25", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Accessories", 
+                                    "parent_id": "12", 
+                                    "position": "25"
+                                }, 
+                                {
+                                    "category_id": "26", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Digital Cameras", 
+                                    "parent_id": "12", 
+                                    "position": "26"
+                                }
+                            ], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Cameras", 
+                            "parent_id": "13", 
+                            "position": "12"
+                        }, 
+                        {
+                            "category_id": "15", 
+                            "children": [
+                                {
+                                    "category_id": "27", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Build Your Own", 
+                                    "parent_id": "15", 
+                                    "position": "1"
+                                }, 
+                                {
+                                    "category_id": "28", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Laptops", 
+                                    "parent_id": "15", 
+                                    "position": "2"
+                                }, 
+                                {
+                                    "category_id": "29", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Hard Drives", 
+                                    "parent_id": "13", 
+                                    "position": "3"
+                                }, 
+                                {
+                                    "category_id": "30", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Monitors", 
+                                    "parent_id": "13", 
+                                    "position": "4"
+                                }, 
+                                {
+                                    "category_id": "31", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "RAM / Memory", 
+                                    "parent_id": "13", 
+                                    "position": "5"
+                                }, 
+                                {
+                                    "category_id": "32", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Cases", 
+                                    "parent_id": "13", 
+                                    "position": "6"
+                                }, 
+                                {
+                                    "category_id": "33", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Processors", 
+                                    "parent_id": "13", 
+                                    "position": "7"
+                                }, 
+                                {
+                                    "category_id": "34", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Peripherals", 
+                                    "parent_id": "13", 
+                                    "position": "8"
+                                }
+                            ], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Computers", 
+                            "parent_id": "13", 
+                            "position": "15"
+                        }
+                    ], 
+                    "is_active": "1", 
+                    "level": "2", 
+                    "name": "Electronics", 
+                    "parent_id": "3", 
+                    "position": "13"
+                }, 
+                {
+                    "category_id": "18", 
+                    "children": [
+                        {
+                            "category_id": "4", 
+                            "children": [], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Shirts", 
+                            "parent_id": "18", 
+                            "position": "4"
+                        }, 
+                        {
+                            "category_id": "5", 
+                            "children": [
+                                {
+                                    "category_id": "16", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Mens", 
+                                    "parent_id": "5", 
+                                    "position": "16"
+                                }, 
+                                {
+                                    "category_id": "17", 
+                                    "children": [], 
+                                    "is_active": "1", 
+                                    "level": "4", 
+                                    "name": "Womens", 
+                                    "parent_id": "5", 
+                                    "position": "17"
+                                }
+                            ], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Shoes", 
+                            "parent_id": "18", 
+                            "position": "5"
+                        }, 
+                        {
+                            "category_id": "19", 
+                            "children": [], 
+                            "is_active": "1", 
+                            "level": "3", 
+                            "name": "Hoodies", 
+                            "parent_id": "18", 
+                            "position": "19"
+                        }, 
+                        {
+                            "category_id": "24", 
+                            "children": [], 
+                            "is_active": "0", 
+                            "level": "3", 
+                            "name": "Pants", 
+                            "parent_id": "18", 
+                            "position": "24"
+                        }
+                    ], 
+                    "is_active": "1", 
+                    "level": "2", 
+                    "name": "Apparel", 
+                    "parent_id": "3", 
+                    "position": "18"
+                }, 
+                {
+                    "category_id": "20", 
+                    "children": [], 
+                    "is_active": "0", 
+                    "level": "2", 
+                    "name": "Household Items", 
+                    "parent_id": "3", 
+                    "position": "20"
+                }
+            ], 
+            "is_active": "1", 
+            "level": "1", 
+            "name": "Root Catalog", 
+            "parent_id": "1", 
+            "position": "3"
+        }
+    ], 
+    "is_active": "1", 
+    "level": "0", 
+    "name": "Root", 
+    "parent_id": "0", 
+    "position": "1"
+}

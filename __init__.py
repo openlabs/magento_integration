@@ -8,5 +8,6 @@
 # flake8: noqa
 import magento_
 import country
+import product
 
 import wizard

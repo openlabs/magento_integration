@@ -8,17 +8,14 @@
 import unittest
 
 from itsbroken.transaction import Transaction
-from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT, \
-    install_module, drop_database
+from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
+
+from .test_base import TestBase
 
 
-class TestModels(unittest.TestCase):
+class TestModels(TestBase):
     """Test the model structure of instance, website, store and store views
     """
-
-    def setUp(self):
-        "Setup"
-        install_module('magento_integration')
 
     def test_0010_create_instance(self):
         """
@@ -162,14 +159,6 @@ class TestModels(unittest.TestCase):
             self.assertEqual(store_view.instance, store.instance)
             self.assertEqual(store_view.company, store.company)
             self.assertEqual(store.store_views[0].id, store_view.id)
-
-
-def tearDownModule():
-    """
-    Drop the database at the end of this test module
-    Works only with unittest2 (default in python 2.7+)
-    """
-    drop_database()
 
 
 def suite():
