@@ -8,8 +8,19 @@
     :license: AGPL, see LICENSE for more details.
 """
 import unittest
+from itsbroken.testing import drop_database
+
 from .test_models import TestModels
 from .test_country import TestCountry
+from .test_product import TestProduct
+
+
+def tearDownModule():
+    """
+    Drop the database at the end of this test module
+    Works only with unittest2 (default in python 2.7+)
+    """
+    drop_database()
 
 
 def suite():
@@ -17,6 +28,7 @@ def suite():
     _suite.addTests([
         unittest.TestLoader().loadTestsFromTestCase(TestModels),
         unittest.TestLoader().loadTestsFromTestCase(TestCountry),
+        unittest.TestLoader().loadTestsFromTestCase(TestProduct),
     ])
     return _suite
 

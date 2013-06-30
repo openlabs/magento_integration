@@ -10,28 +10,22 @@
 import unittest
 
 from itsbroken.transaction import Transaction
-from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT, \
-    install_module, drop_database
+from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
+
+from test_base import TestBase
 
 
-class TestCountry(unittest.TestCase):
+class TestCountry(TestBase):
     """
     Tests country
     """
-
-    def setUp(self):
-        """
-        Setup
-        """
-        install_module('magento_integration')
-
-        self.country_obj = POOL.get('res.country')
 
     def test_0010_search_country_with_valid_code(self):
         """
         Tests if country can be searched using magento code
         """
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.country_obj = POOL.get('res.country')
 
             code = 'US'
 
@@ -53,6 +47,7 @@ class TestCountry(unittest.TestCase):
         Tests if error is raised for searching country with invalid code
         """
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.country_obj = POOL.get('res.country')
 
             code = 'abc'
 
@@ -60,14 +55,6 @@ class TestCountry(unittest.TestCase):
                 self.country_obj.search_using_magento_code(
                     txn.cursor, txn.user, code, txn.context
                 )
-
-
-def tearDownModule():
-    """
-    Drop the database at the end of this test module
-    Works only with unittest2 (default in python 2.7+)
-    """
-    drop_database()
 
 
 def suite():
