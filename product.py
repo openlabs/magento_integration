@@ -85,7 +85,7 @@ class Category(osv.Model):
         )
         if not category:
             instance = instance_obj.browse(
-                cursor, user, context.get('magento_instance'), context=context
+                cursor, user, context['magento_instance'], context=context
             )
 
             with magento.Category(
@@ -115,7 +115,7 @@ class Category(osv.Model):
         )
         record_ids = magento_category_obj.search(cursor, user, [
             ('magento_id', '=', int(category_data['category_id'])),
-            ('instance', '=', context.get('magento_instance'))
+            ('instance', '=', context['magento_instance'])
         ], context=context)
         return record_ids and magento_category_obj.browse(
             cursor, user, record_ids[0], context=context
@@ -137,7 +137,7 @@ class Category(osv.Model):
         )
         record_ids = magento_category_obj.search(cursor, user, [
             ('magento_id', '=', magento_id),
-            ('instance', '=', context.get('magento_instance'))
+            ('instance', '=', context['magento_instance'])
         ], context=context)
         return record_ids and magento_category_obj.browse(
             cursor, user, record_ids[0], context=context
@@ -160,7 +160,7 @@ class Category(osv.Model):
             'parent_id': parent,
             'magento_ids': [(0, 0, {
                 'magento_id': int(category_data['category_id']),
-                'instance': context.get('magento_instance'),
+                'instance': context['magento_instance'],
             })]
         }, context=context)
 
@@ -219,6 +219,65 @@ class Product(osv.Model):
         ),
     )
 
+    def find_or_create_using_magento_id(
+        self, cursor, user, magento_id, context
+    ):
+        """
+        Find or create product using magento_id
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Product ID from magento
+        :param context: Application context
+        :returns: Browse record of product found/created
+        """
+        website_obj = self.pool.get('magento.instance.website')
+
+        product = self.find_using_magento_id(
+            cursor, user, magento_id, context
+        )
+        if not product:
+            # If product is not found, get the info from magento and delegate
+            # to create_using_magento_data
+            website = website_obj.browse(
+                cursor, user, context['magento_website'], context=context
+            )
+
+            instance = website.instance
+            with magento.Product(
+                instance.url, instance.api_user, instance.api_key
+            ) as product_api:
+                product_data = product_api.info(magento_id)
+
+            product = self.create_using_magento_data(
+                cursor, user, product_data, context
+            )
+
+        return product
+
+    def find_using_magento_id(self, cursor, user, magento_id, context):
+        """
+        Finds product using magento id
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Product ID from magento
+        :param context: Application context
+        :returns: Browse record of product found
+        """
+        magento_product_obj = self.pool.get('magento.website.product')
+
+        record_ids = magento_product_obj.search(
+            cursor, user, [
+                ('magento_id', '=', magento_id),
+                ('website', '=', context['magento_website'])
+            ], context=context
+        )
+
+        return record_ids and magento_product_obj.browse(
+            cursor, user, record_ids[0], context=context
+        ).product or None
+
     def find_or_create_using_magento_data(
         self, cursor, user, product_data, context=None
     ):
@@ -254,7 +313,7 @@ class Product(osv.Model):
         magento_product_obj = self.pool.get('magento.website.product')
         record_ids = magento_product_obj.search(cursor, user, [
             ('magento_id', '=', int(product_data['product_id'])),
-            ('website', '=', context.get('magento_website'))
+            ('website', '=', context['magento_website'])
         ], context=context)
         return record_ids and magento_product_obj.browse(
             cursor, user, record_ids[0], context=context
@@ -304,7 +363,7 @@ class Product(osv.Model):
             'magento_product_type': product_data['type'],
             'magento_ids': [(0, 0, {
                 'magento_id': int(product_data['product_id']),
-                'website': context.get('magento_website'),
+                'website': context['magento_website'],
             })]
         }, context=context)
 
