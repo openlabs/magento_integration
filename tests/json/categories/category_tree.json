@@ -1,4 +1,5 @@
 {
+    "__comment__": "Category tree for all categories resembling the category tree sent by magento",
     "category_id": "1", 
     "children": [
         {

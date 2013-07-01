@@ -13,7 +13,7 @@ import unittest
 from itsbroken.testing import POOL, install_module
 
 
-def get_loaded_json(resource, filename):
+def load_json(resource, filename):
     """Reads the json file from the filesystem and returns the json loaded as
     python objects
 

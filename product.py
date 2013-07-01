@@ -5,6 +5,7 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) LTD
     :license: AGPLv3, see LICENSE for more details
 '''
+import magento
 from openerp.osv import fields, osv
 
 
@@ -56,7 +57,7 @@ class Category(osv.Model):
         :returns: Browse record of category found/created
         """
         category = self.find_using_magento_data(
-            cursor, user, category_data, parent, context
+            cursor, user, category_data, context
         )
         if not category:
             category = self.create_using_magento_data(
@@ -65,15 +66,47 @@ class Category(osv.Model):
 
         return category
 
+    def find_or_create_using_magento_id(
+        self, cursor, user, magento_id, parent=None, context=None
+    ):
+        """Find or Create category using magento ID of category
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Category ID from magento
+        :param parent: openerp ID of parent if present else None
+        :param context: Application context
+        :returns: Browse record of category found/created
+        """
+        instance_obj = self.pool.get('magento.instance')
+
+        category = self.find_using_magento_id(
+            cursor, user, magento_id, context
+        )
+        if not category:
+            instance = instance_obj.browse(
+                cursor, user, context.get('magento_instance'), context=context
+            )
+
+            with magento.Category(
+                instance.url, instance.api_user, instance.api_key
+            ) as category_api:
+                category_data = category_api.info(magento_id)
+
+            category = self.create_using_magento_data(
+                cursor, user, category_data, parent, context
+            )
+
+        return category
+
     def find_using_magento_data(
-        self, cursor, user, category_data, parent=None, context=None
+        self, cursor, user, category_data, context=None
     ):
         """Find category using magento data
 
         :param cursor: Database cursor
         :param user: ID of current user
         :param category_data: Category Data from magento
-        :param parent: openerp ID of parent if present else None
         :param context: Application context
         :returns: Browse record of category found or None
         """
@@ -82,6 +115,28 @@ class Category(osv.Model):
         )
         record_ids = magento_category_obj.search(cursor, user, [
             ('magento_id', '=', int(category_data['category_id'])),
+            ('instance', '=', context.get('magento_instance'))
+        ], context=context)
+        return record_ids and magento_category_obj.browse(
+            cursor, user, record_ids[0], context=context
+        ).category or None
+
+    def find_using_magento_id(
+        self, cursor, user, magento_id, context=None
+    ):
+        """Find category using magento id or category
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Category ID from magento
+        :param context: Application context
+        :returns: Browse record of category found or None
+        """
+        magento_category_obj = self.pool.get(
+            'magento.instance.product_category'
+        )
+        record_ids = magento_category_obj.search(cursor, user, [
+            ('magento_id', '=', magento_id),
             ('instance', '=', context.get('magento_instance'))
         ], context=context)
         return record_ids and magento_category_obj.browse(
@@ -140,5 +195,149 @@ class MagentoInstanceCategory(osv.Model):
             'magento_id_instance_unique',
             'unique(magento_id, instance)',
             'Each category in an instance must be unique!'
+        ),
+    ]
+
+
+class Product(osv.Model):
+    """Product
+    """
+    _inherit = 'product.product'
+
+    _columns = dict(
+        magento_product_type=fields.selection([
+            ('simple', 'Simple'),
+            ('configurable', 'Configurable'),
+            ('grouped', 'Grouped'),
+            ('bundle', 'Bundle'),
+            ('virtual', 'Virtual'),
+            ('downloadable', 'Downloadable'),
+        ], 'Magento Product type', readonly=True),
+        magento_ids=fields.one2many(
+            'magento.website.product', 'product',
+            string='Magento IDs', readonly=True,
+        ),
+    )
+
+    def find_or_create_using_magento_data(
+        self, cursor, user, product_data, context=None
+    ):
+        """Find or Create product using magento data
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product_data: Product Data from magento
+        :param context: Application context
+        :returns: Browse record of product found/created
+        """
+        product = self.find_using_magento_data(
+            cursor, user, product_data, context
+        )
+        if not product:
+            product = self.create_using_magento_data(
+                cursor, user, product_data, context
+            )
+
+        return product
+
+    def find_using_magento_data(
+        self, cursor, user, product_data, context=None
+    ):
+        """Find product using magento data
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product_data: Category Data from magento
+        :param context: Application context
+        :returns: Browse record of product found or None
+        """
+        magento_product_obj = self.pool.get('magento.website.product')
+        record_ids = magento_product_obj.search(cursor, user, [
+            ('magento_id', '=', int(product_data['product_id'])),
+            ('website', '=', context.get('magento_website'))
+        ], context=context)
+        return record_ids and magento_product_obj.browse(
+            cursor, user, record_ids[0], context=context
+        ).product or None
+
+    def create_using_magento_data(
+        self, cursor, user, product_data, context=None
+    ):
+        """Create product using magento data
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product_data: Product Data from magento
+        :param context: Application context
+        :returns: Browse record of product created
+        """
+        category_obj = self.pool.get('product.category')
+        uom_obj = self.pool.get('product.uom')
+
+        # Get only the first category from list of categories
+        # If not category is found, put product under unclassified category
+        # which is created by default data
+        if product_data.get('categories'):
+            category_id = category_obj.find_or_create_using_magento_id(
+                cursor, user, int(product_data['categories'][0]),
+                context=context
+            ).id
+        else:
+            category_id, = category_obj.search(cursor, user, [
+                ('name', '=', 'Unclassified Magento Products')
+            ], context=context)
+        unit, = uom_obj.search(
+            cursor, user, [('name', '=', 'Unit(s)')], context=context
+        )
+
+        product_id = self.create(cursor, user, {
+            'name': product_data['name'],
+            'categ_id': category_id,
+            'default_code': product_data['sku'],
+            'uom_id': unit,
+            'list_price': float(
+                product_data.get('special_price') or
+                product_data.get('price') or 0.00
+            ),
+            'standard_price': float(product_data.get('price') or 0.00),
+            'description': product_data['description'],
+            'magento_product_type': product_data['type'],
+            'magento_ids': [(0, 0, {
+                'magento_id': int(product_data['product_id']),
+                'website': context.get('magento_website'),
+            })]
+        }, context=context)
+
+        return self.browse(cursor, user, product_id, context=context)
+
+
+class MagentoWebsiteProduct(osv.Model):
+    """Magento Website - Product store
+
+    This model keeps a record of a product's association with a website and
+    the ID of product on that website
+    """
+    _name = 'magento.website.product'
+    _description = 'Magento Website - Product store'
+
+    _columns = dict(
+        magento_id=fields.integer(
+            'Magento ID', readonly=True, required=True, select=True,
+        ),
+        website=fields.many2one(
+            'magento.instance.website', 'Magento Website', readonly=True,
+            select=True, required=True
+        ),
+        product=fields.many2one(
+            'product.product', 'Product', readonly=True,
+            required=True, select=True
+        )
+    )
+
+    _sql_constraints = [
+        (
+            'magento_id_website_unique',
+            'unique(magento_id, website)',
+            'Each product in a website must be unique!'
         ),
     ]
