@@ -9,5 +9,6 @@
 import magento_
 import country
 import product
+import partner
 
 import wizard
