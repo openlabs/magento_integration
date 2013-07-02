@@ -334,6 +334,16 @@
             <field name="function" eval="'get_orders'"/>
             <field name="args" eval="'()'"/>
         </record>
+        <record model="ir.cron" id="ir_cron_export_sale_orders">
+            <field name="name">Export Sales Status to Magento</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model" eval="'magento.store.store_view'"/>
+            <field name="function" eval="'export_orders'"/>
+            <field name="args" eval="'()'"/>
+        </record>
 
     </data>
 </openerp>

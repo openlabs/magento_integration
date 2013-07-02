@@ -218,6 +218,7 @@ class WebsiteStoreView(osv.Model):
         store=fields.many2one(
             'magento.website.store', 'Store', required=True, readonly=True,
         ),
+        last_order_export_time=fields.datetime('Last Order Export Time'),
         instance=fields.related(
             'store', 'instance', type='many2one',
             relation='magento.instance', string='Instance', readonly=True,
@@ -291,6 +292,21 @@ class WebsiteStoreView(osv.Model):
                 cursor, user, store_view, context
             )
 
+    def export_orders(self, cursor, user, ids=None, context=None):
+        """
+        Export sales orders status to magento.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: List of store_view ids
+        :param context: Dictionary of application context
+        """
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for store_view in self.browse(cursor, user, ids, context):
+            self.export_order_to_magento(cursor, user, store_view, context)
+
     def import_orders_from_store_view(self, cursor, user, store_view, context):
         """
         Imports orders from store view
@@ -338,3 +354,27 @@ class WebsiteStoreView(osv.Model):
                 )
 
         return new_sales
+
+    def export_order_to_magento(self, cursor, user, store_view, context):
+        """
+        Export sale orders to magento for the current store view.
+        Export only those orders which are updated after last export time.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param store_view: Browse record of store_view
+        :param context: Dictionary of application context
+        """
+        sale_obj = self.pool.get('sale.order')
+
+        order_ids = sale_obj.search(
+            cursor, user, [
+                ('magento_store_view', '=', store_view.id),
+                ('write_date', '>=', store_view.last_order_export_time),
+            ], context=context
+        )
+
+        for sale_order in sale_obj.browse(cursor, user, order_ids):
+            sale_obj.export_order_status_to_magento(
+                cursor, user, sale_order, context
+            )
