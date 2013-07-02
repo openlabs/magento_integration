@@ -105,6 +105,10 @@
             <field eval="7" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Website" version="7.0">
+                    <header>
+                        <button name="%(action_magento_import_catalog)d"
+                                type='action' class="oe_highlight" string='Import Catalog'/>
+                    </header>
                     <sheet>
                         <group>
                             <group>

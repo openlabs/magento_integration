@@ -6,5 +6,33 @@
             <field name="name">Unclassified Magento Products</field>
         </record>
 
+        <record id="product_normal_form_view" model="ir.ui.view">
+            <field name="name">product.normal.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="arch" type="xml">
+                <notebook position="inside">
+                    <page string="Magento" groups="base.group_user" >
+                        <field name= "magento_ids"/>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+
+        <record id="product_category_form_view" model="ir.ui.view">
+            <field name="name">product.category.form.inherit</field>
+            <field name="model">product.category</field>
+            <field name="inherit_id" ref="product.product_category_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='parent']" position="after">
+                    <notebook position="inside" colspan="4">
+                        <page string="Magento" groups="base.group_user" >
+                          <field name= "magento_ids"/>
+                      </page>
+                    </notebook>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
