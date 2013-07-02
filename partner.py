@@ -7,6 +7,8 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) Limited
     :license: AGPLv3, see LICENSE for more details.
 """
+import magento
+
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 
@@ -65,6 +67,59 @@ class Partner(osv.Model):
         ),
     )
 
+    def find_or_create_using_magento_id(
+        self, cursor, user, magento_id, context
+    ):
+        """
+        Finds or creates partner using magento ID
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Partner ID sent by magento
+        :param context: Application context.
+        :return: Browse record of record created/found
+        """
+        instance_obj = self.pool.get('magento.instance')
+
+        partner = self.find_using_magento_id(cursor, user, magento_id, context)
+        if not partner:
+            instance = instance_obj.browse(
+                cursor, user, context['magento_instance'], context=context
+            )
+
+            with magento.Customer(
+                instance.url, instance.api_user, instance.api_key
+            ) as customer_api:
+                customer_data = customer_api.info(magento_id)
+
+            partner = self.create_using_magento_data(
+                cursor, user, customer_data, context
+            )
+        return partner
+
+    def find_using_magento_id(self, cursor, user, magento_id, context):
+        """
+        Finds partner with magento id
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_id: Partner ID sent by magento
+        :param context: Application context.
+        :return: Browse record of record found
+        """
+        magento_partner_obj = self.pool.get('magento.website.partner')
+
+        partner_ids = magento_partner_obj.search(
+            cursor, user, [
+                ('magento_id', '=', magento_id),
+                ('website', '=', context['magento_website'])
+            ], context=context
+        )
+
+        return partner_ids and self.browse(
+            cursor, user, partner_ids[0], context=context
+        ) or None
+
     def find_or_create(self, cursor, user, customer_data, context):
         """
         Looks for the customer whose `customer_data` is sent by magento against
@@ -79,7 +134,7 @@ class Partner(osv.Model):
                         which the customer has to be linked
         :return: Browse record of record created/found
         """
-        if not context.get('magento_website_id'):
+        if not context['magento_website']:
             raise osv.except_osv(
                 _('Not Found!'),
                 _('Website does not exists in context. ')
@@ -116,7 +171,7 @@ class Partner(osv.Model):
                 'magento_ids': [
                     (0, 0, {
                         'magento_id': customer_data.get('customer_id'),
-                        'website': context.get('magento_website_id'),
+                        'website': context['magento_website'],
                     })
                 ],
             }, context=context
@@ -146,7 +201,7 @@ class Partner(osv.Model):
         partner_ids = magento_partner_obj.search(
             cursor, user, [
                 ('magento_id', '=', customer_data['customer_id']),
-                ('website', '=', context.get('magento_website_id'))
+                ('website', '=', context['magento_website'])
             ], context=context
         )
         return partner_ids and self.browse(

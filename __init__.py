@@ -10,5 +10,7 @@ import magento_
 import country
 import product
 import partner
+import sale
+import currency
 
 import wizard

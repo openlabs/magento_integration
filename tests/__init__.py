@@ -14,6 +14,8 @@ from .test_models import TestModels
 from .test_country import TestCountry
 from .test_product import TestProduct
 from .test_partner import TestPartner
+from .test_sale import TestSale
+from .test_currency import TestCurrency
 
 
 def tearDownModule():
@@ -30,7 +32,9 @@ def suite():
         unittest.TestLoader().loadTestsFromTestCase(TestModels),
         unittest.TestLoader().loadTestsFromTestCase(TestCountry),
         unittest.TestLoader().loadTestsFromTestCase(TestProduct),
-        unittest.TestLoader().loadTestsFromTestCase(TestPartner)
+        unittest.TestLoader().loadTestsFromTestCase(TestPartner),
+        unittest.TestLoader().loadTestsFromTestCase(TestSale),
+        unittest.TestLoader().loadTestsFromTestCase(TestCurrency),
     ])
     return _suite
 

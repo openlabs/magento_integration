@@ -35,7 +35,7 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website_id': self.website_id1
+                'magento_website': self.website_id1
             })
             values = load_json('customers', '1')
 
@@ -76,7 +76,7 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website_id': self.website_id1
+                'magento_website': self.website_id1
             })
 
             values = load_json('customers', '1')
@@ -111,7 +111,7 @@ class TestPartner(TestBase):
 
             # Create partner with different website
             context.update({
-                'magento_website_id': self.website_id2
+                'magento_website': self.website_id2
             })
             values = load_json('customers', '1')
 
@@ -127,7 +127,7 @@ class TestPartner(TestBase):
 
             # Create partner with different magento_id
             context.update({
-                'magento_website_id': self.website_id1
+                'magento_website': self.website_id1
             })
 
             values = load_json('customers', '2')
@@ -168,7 +168,7 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website_id': self.website_id1
+                'magento_website': self.website_id1
             })
             customer_data = load_json('customers', '1')
 
@@ -212,7 +212,7 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website_id': self.website_id1
+                'magento_website': self.website_id1
             })
             customer_data = load_json('customers', '1')
 

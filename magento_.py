@@ -21,6 +21,10 @@ class Instance(osv.Model):
         url=fields.char('Magento Site URL', required=True, size=255),
         api_user=fields.char('API User', required=True, size=50),
         api_key=fields.char('API Password / Key', required=True, size=100),
+        order_prefix=fields.char(
+            'Sale Order Prefix', size=10, help=
+            "This helps to distinguish between orders from different instances"
+        ),
         active=fields.boolean('Active'),
         company=fields.many2one(
             'res.company', 'Company', required=True
@@ -47,6 +51,7 @@ class Instance(osv.Model):
     _defaults = dict(
         active=lambda *a: 1,
         company=default_company,
+        order_prefix=lambda *a: 'mag_'
     )
 
     _sql_constraints = [
@@ -136,6 +141,10 @@ class WebsiteStore(osv.Model):
             'magento.instance.website', 'Website', required=True,
             readonly=True,
         ),
+        shop=fields.many2one(
+            'sale.shop', 'Sales Shop',
+            help="Imported sales for this store will go into this shop",
+        ),
         instance=fields.related(
             'website', 'instance', type='many2one',
             relation='magento.instance', string='Instance', readonly=True,
@@ -215,6 +224,10 @@ class WebsiteStoreView(osv.Model):
         company=fields.related(
             'store', 'company', type='many2one', relation='res.company',
             string='Company', readonly=True
+        ),
+        shop=fields.related(
+            'store', 'shop', type='many2one', relation='sale.shop',
+            string='Sales Shop', readonly=True,
         ),
     )
 
