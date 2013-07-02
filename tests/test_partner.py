@@ -53,7 +53,7 @@ class TestPartner(TestBase):
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('name', '=', values['firstname'])
+                        ('email', '=', values['email'])
                     ], context=context
                 )
             )
@@ -88,7 +88,7 @@ class TestPartner(TestBase):
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('name', '=', values['firstname'])
+                        ('email', '=', values['email'])
                     ], context=context
                 )
             )
@@ -135,7 +135,7 @@ class TestPartner(TestBase):
             self.assertFalse(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('name', '=', values['firstname'])
+                        ('email', '=', values['email'])
                     ], context=context
                 )
             )
@@ -147,7 +147,7 @@ class TestPartner(TestBase):
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('name', '=', values['firstname'])
+                        ('email', '=', values['email'])
                     ], context=context
                 )
             )
@@ -155,6 +155,120 @@ class TestPartner(TestBase):
                 txn.cursor, txn.user, [], context=context
             )
             self.assertEqual(len(partners), 3)
+
+    def test0030_create_address(self):
+        """
+        Tests if address creation works as expected
+        """
+        partner_obj = POOL.get('res.partner')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+
+            self.setup_defaults(txn)
+
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_website_id': self.website_id1
+            })
+            customer_data = load_json('customers', '1')
+
+            # Create partner
+            partner = partner_obj.find_or_create(
+                txn.cursor, txn.user, customer_data, context
+            )
+
+            address_data = load_json('addresses', '1')
+
+            partners_before_address = partner_obj.search(
+                txn.cursor, txn.user, [], context=context, count=True
+            )
+
+            address_partner = partner_obj.\
+                find_or_create_address_as_partner_using_magento_data(
+                    txn.cursor, txn.user, address_data, partner, context
+                )
+
+            partners_after_address = partner_obj.search(
+                txn.cursor, txn.user, [], context=context, count=True
+            )
+
+            self.assertTrue(partners_after_address > partners_before_address)
+
+            self.assertEqual(
+                address_partner.name, ' '.join(
+                    [address_data['firstname'], address_data['lastname']]
+                )
+            )
+
+    def test0040_match_address(self):
+        """
+        Tests if address matching works as expected
+        """
+        partner_obj = POOL.get('res.partner')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+
+            self.setup_defaults(txn)
+
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_website_id': self.website_id1
+            })
+            customer_data = load_json('customers', '1')
+
+            # Create partner
+            partner = partner_obj.find_or_create(
+                txn.cursor, txn.user, customer_data, context
+            )
+
+            address_data = load_json('addresses', '1')
+
+            address = partner_obj.\
+                find_or_create_address_as_partner_using_magento_data(
+                    txn.cursor, txn.user, address_data, partner, context
+                )
+
+            # Same address imported again
+            self.assertTrue(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1')
+                )
+            )
+
+            # Exactly similar address imported again
+            self.assertTrue(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1a')
+                )
+            )
+
+            # Similar with different country
+            self.assertFalse(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1b')
+                )
+            )
+
+            # Similar with different state
+            self.assertFalse(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1c')
+                )
+            )
+
+            # Similar with different telephone
+            self.assertFalse(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1d')
+                )
+            )
+
+            # Similar with different street
+            self.assertFalse(
+                partner_obj.match_address_with_magento_data(
+                    txn.cursor, txn.user, address, load_json('addresses', '1e')
+                )
+            )
 
 
 def suite():
