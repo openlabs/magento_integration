@@ -305,7 +305,7 @@ class WebsiteStoreView(osv.Model):
             ids = self.search(cursor, user, [], context)
 
         for store_view in self.browse(cursor, user, ids, context):
-            self.export_order_to_magento(cursor, user, store_view, context)
+            self.export_orders_to_magento(cursor, user, store_view, context)
 
     def import_orders_from_store_view(self, cursor, user, store_view, context):
         """
@@ -355,7 +355,7 @@ class WebsiteStoreView(osv.Model):
 
         return new_sales
 
-    def export_order_to_magento(self, cursor, user, store_view, context):
+    def export_orders_to_magento(self, cursor, user, store_view, context):
         """
         Export sale orders to magento for the current store view.
         Export only those orders which are updated after last export time.
@@ -367,14 +367,24 @@ class WebsiteStoreView(osv.Model):
         """
         sale_obj = self.pool.get('sale.order')
 
-        order_ids = sale_obj.search(
-            cursor, user, [
-                ('magento_store_view', '=', store_view.id),
-                ('write_date', '>=', store_view.last_order_export_time),
-            ], context=context
-        )
+        exported_sales = []
+        domain = [('magento_store_view', '=', store_view.id)]
 
-        for sale_order in sale_obj.browse(cursor, user, order_ids):
-            sale_obj.export_order_status_to_magento(
-                cursor, user, sale_order, context
+        if store_view.last_order_export_time:
+            domain.append(
+                ('write_date', '>=', store_view.last_order_export_time)
             )
+
+        order_ids = sale_obj.search(cursor, user, domain, context=context)
+
+        self.write(cursor, user, [store_view.id], {
+            'last_order_export_time': time.strftime(
+                DEFAULT_SERVER_DATETIME_FORMAT
+            )
+        }, context=context)
+        for sale_order in sale_obj.browse(cursor, user, order_ids):
+            exported_sales.append(sale_obj.export_order_status_to_magento(
+                cursor, user, sale_order, context
+            ))
+
+        return exported_sales
