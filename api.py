@@ -51,3 +51,25 @@ class Core(API):
         :return: List of Dictionaries
         """
         return self.call('ol_storeviews.list', [filters])
+
+
+class OrderConfig(API):
+    '''
+    Getting Order Configuration from magento.
+    '''
+
+    def get_states(self):
+        """
+        Get states of orders
+
+        :return: dictionary of all states.
+                 Format :
+                    {<state>: <state title>}
+                 Example :
+                    {   'canceled': 'Canceled',
+                        'closed': 'Closed',
+                        'holded': 'On Hold',
+                        'pending_payment': 'Pending Payment'
+                    }
+        """
+        return self.call('sales_order.get_order_states', [])
