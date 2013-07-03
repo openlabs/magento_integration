@@ -8,6 +8,7 @@
 
 '''
 import os
+import sys
 import unittest
 from setuptools import setup, Command
 
@@ -38,7 +39,11 @@ class TravisTest(Command):
         ).rsplit('/', 1)
         config.options['addons_path'] += ',' + parent_folder
         from tests import suite
-        unittest.TextTestRunner(verbosity=3).run(suite())
+        test_result = unittest.TextTestRunner(verbosity=3).run(suite())
+
+        if test_result.wasSuccessful():
+            sys.exit(0)
+        sys.exit(-1)
 
 
 setup(
