@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_export_orders" model="ir.ui.view">
+            <field name="name">magento.store.store_view.export_orders.form</field>
+            <field name="model">magento.store.store_view.export_orders</field>
+            <field name="arch" type="xml">
+                <form string="Export Orders Status" version="7.0">
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will export orders' status to magento for this store view.
+                            All the orders edited/updated after the Last Order Export Time will be exported.
+                            [NOTE: This feature is currently available only for Canceled Orders.]
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="export_orders" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_export_orders" model="ir.actions.act_window">
+            <field name="name">Export Orders</field>
+            <field name="res_model">magento.store.store_view.export_orders</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_export_orders"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>
