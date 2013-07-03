@@ -265,6 +265,10 @@
             <field eval="7" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Store View" version="7.0">
+                    <header>
+                         <button name="%(action_magento_import_orders)d"
+                                 type='action' class="oe_highlight" string='Import Orders'/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
