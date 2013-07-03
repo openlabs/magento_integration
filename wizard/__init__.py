@@ -9,3 +9,4 @@
 import test_connection
 import import_websites
 import import_catalog
+import import_orders

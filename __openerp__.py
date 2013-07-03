@@ -25,6 +25,7 @@ This will import the following:
         'wizard/test_connection.xml',
         'wizard/import_websites.xml',
         'wizard/import_catalog.xml',
+        'wizard/import_orders.xml',
         'product.xml',
         'magento.xml',
     ],

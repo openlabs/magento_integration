@@ -8,6 +8,7 @@
     :license: AGPLv3, see LICENSE for more details.
 """
 from copy import deepcopy
+from contextlib import nested
 import unittest
 
 import magento
@@ -146,7 +147,10 @@ class TestSale(TestBase):
                 )
 
             # Create sale order using magento increment_id
-            with patch('magento.Order', mock_order_api(), create=True):
+            with nested(
+                patch('magento.Product', mock_product_api(), create=True),
+                patch('magento.Order', mock_order_api(), create=True),
+            ):
                 order = sale_obj.find_or_create_using_magento_increment_id(
                     txn.cursor, txn.user, order_data['increment_id'],
                     context=context

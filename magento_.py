@@ -6,8 +6,10 @@
     :license: AGPLv3, see LICENSE for more details
 '''
 from copy import deepcopy
+import time
 
 from openerp.osv import fields, osv
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 import magento
 
 
@@ -310,8 +312,14 @@ class WebsiteStoreView(osv.Model):
         })
         new_sales = []
 
-        with magento.Order(instance.url, instance.user, instance.key) as \
-                order_api:
+        self.write(cursor, user, [store_view.id], {
+            'last_order_import_time': time.strftime(
+                DEFAULT_SERVER_DATETIME_FORMAT
+            )
+        }, context=context)
+        with magento.Order(
+            instance.url, instance.api_user, instance.api_key
+        ) as order_api:
             # Filter orders with date and store_id using list()
             # then get info of each order using info()
             # and call find_or_create_using_magento_data on sale

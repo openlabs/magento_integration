@@ -56,8 +56,9 @@ class Sale(osv.Model):
         :return: True or False
         """
         for sale in self.browse(cursor, user, ids, context=context):
-            if sale.store_view.instance != sale.magento_instance:
-                return False
+            if sale.magento_id:
+                if sale.store_view.instance != sale.magento_instance:
+                    return False
         return True
 
     _constraints = [
@@ -237,9 +238,20 @@ class Sale(osv.Model):
         currency = currency_obj.search_using_magento_code(
             cursor, user, order_data['order_currency_code'], context
         )
-        partner = partner_obj.find_or_create_using_magento_id(
-            cursor, user, order_data['customer_id'], context
-        )
+        if order_data['customer_id']:
+            partner = partner_obj.find_or_create_using_magento_id(
+                cursor, user, order_data['customer_id'], context
+            )
+        else:
+            partner = partner_obj.create_using_magento_data(
+                cursor, user, {
+                    'firstname': order_data['customer_firstname'],
+                    'lastname': order_data['customer_lastname'],
+                    'email': order_data['customer_email'],
+                    'magento_id': 0
+                },
+                context
+            )
 
         partner_invoice_address = \
             partner_obj.find_or_create_address_as_partner_using_magento_data(
@@ -355,7 +367,7 @@ class Sale(osv.Model):
 
         return (0, 0, {
             'name': order_data['discount_description'] or 'Magento Discount',
-            'price_unit': - float(order_data.get('discount_amount', 0.00)),
+            'price_unit': float(order_data.get('discount_amount', 0.00)),
             'product_uom': unit,
             'notes': order_data['discount_description'],
         })

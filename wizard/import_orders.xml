@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_import_orders" model="ir.ui.view">
+            <field name="name">Import Orders</field>
+            <field name="model">magento.store.store_view.import_orders</field>
+            <field name="arch" type="xml">
+                <form string="Import Orders" version="7.0">
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will import all sale orders placed on this store view on magento
+                            after the Last Order Import Time.
+                            If Last Order Import Time is missing, then it will import all the orders from
+                            beginning of time. [This might be slow depending on number of orders.]
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object" name="import_orders" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_import_orders" model="ir.actions.act_window">
+            <field name="name">Import Orders</field>
+            <field name="res_model">magento.store.store_view.import_orders</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_import_orders"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>

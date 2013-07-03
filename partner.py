@@ -109,16 +109,16 @@ class Partner(osv.Model):
         """
         magento_partner_obj = self.pool.get('magento.website.partner')
 
-        partner_ids = magento_partner_obj.search(
+        record_ids = magento_partner_obj.search(
             cursor, user, [
                 ('magento_id', '=', magento_id),
                 ('website', '=', context['magento_website'])
             ], context=context
         )
 
-        return partner_ids and self.browse(
-            cursor, user, partner_ids[0], context=context
-        ) or None
+        return record_ids and magento_partner_obj.browse(
+            cursor, user, record_ids[0], context=context
+        ).partner or None
 
     def find_or_create(self, cursor, user, customer_data, context):
         """
@@ -170,7 +170,7 @@ class Partner(osv.Model):
                 'email': customer_data['email'],
                 'magento_ids': [
                     (0, 0, {
-                        'magento_id': customer_data.get('customer_id'),
+                        'magento_id': customer_data.get('customer_id', 0),
                         'website': context['magento_website'],
                     })
                 ],
@@ -198,15 +198,15 @@ class Partner(osv.Model):
         if not customer_data.get('customer_id'):
             return None
 
-        partner_ids = magento_partner_obj.search(
+        record_ids = magento_partner_obj.search(
             cursor, user, [
                 ('magento_id', '=', customer_data['customer_id']),
                 ('website', '=', context['magento_website'])
             ], context=context
         )
-        return partner_ids and self.browse(
-            cursor, user, partner_ids[0], context
-        ) or None
+        return record_ids and magento_partner_obj.browse(
+            cursor, user, record_ids[0], context
+        ).partner or None
 
     def find_or_create_address_as_partner_using_magento_data(
         self, cursor, user, address_data, parent, context
