@@ -328,11 +328,6 @@ class WebsiteStoreView(osv.Model):
         })
         new_sales = []
 
-        self.write(cursor, user, [store_view.id], {
-            'last_order_import_time': time.strftime(
-                DEFAULT_SERVER_DATETIME_FORMAT
-            )
-        }, context=context)
         with magento.Order(
             instance.url, instance.api_user, instance.api_key
         ) as order_api:
@@ -344,6 +339,11 @@ class WebsiteStoreView(osv.Model):
                 filter.update({
                     'updated_at': {'gteq': store_view.last_order_import_time}
                 })
+            self.write(cursor, user, [store_view.id], {
+                'last_order_import_time': time.strftime(
+                    DEFAULT_SERVER_DATETIME_FORMAT
+                )
+            }, context=context)
             orders = order_api.list(filter)
             for order in orders:
                 new_sales.append(
@@ -370,10 +370,9 @@ class WebsiteStoreView(osv.Model):
         exported_sales = []
         domain = [('magento_store_view', '=', store_view.id)]
 
-        if store_view.last_order_export_time:
-            domain.append(
-                ('write_date', '>=', store_view.last_order_export_time)
-            )
+        # FIXME: Shitty openerp date comparison needs some magical
+        # logic to be implemented.
+        # TODO: Add date comparison or write date with last_order_export_time
 
         order_ids = sale_obj.search(cursor, user, domain, context=context)
 
