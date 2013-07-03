@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Flake8: noqa
 #
 # Magento OpenERP Integration documentation build configuration file, created by
 # sphinx-quickstart on Tue Jul  2 18:16:51 2013.
