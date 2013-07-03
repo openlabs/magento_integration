@@ -7,6 +7,8 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) Limited
     :license: AGPLv3, see LICENSE for more details.
 """
+import xmlrpclib
+
 import magento
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
@@ -35,7 +37,7 @@ class Sale(osv.Model):
         magento_instance=fields.many2one(
             'magento.instance', 'Magento Instance', readonly=True,
         ),
-        store_view=fields.many2one(
+        magento_store_view=fields.many2one(
             'magento.store.store_view', 'Store View', readonly=True,
         ),
     )
@@ -57,7 +59,7 @@ class Sale(osv.Model):
         """
         for sale in self.browse(cursor, user, ids, context=context):
             if sale.magento_id:
-                if sale.store_view.instance != sale.magento_instance:
+                if sale.magento_store_view.instance != sale.magento_instance:
                     return False
         return True
 
@@ -277,7 +279,7 @@ class Sale(osv.Model):
             'partner_shipping_id': partner_shipping_address.id,
             'magento_id': int(order_data['order_id']),
             'magento_instance': instance.id,
-            'store_view': store_view.id,
+            'magento_store_view': store_view.id,
             'order_line': [
                 (0, 0, {
                     'name': item['name'],
@@ -400,3 +402,35 @@ class Sale(osv.Model):
 
         if openerp_state in ['closed', 'complete']:
             self.action_done(cursor, user, [sale.id], context)
+
+    def export_order_status_to_magento(self, cursor, user, sale, context):
+        """
+        Export order status to magento.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param sale: Browse record of sale
+        :param context: Application context
+        :return: Browse record of sale
+        """
+        if not sale.magento_id:
+            return sale
+
+        instance = sale.magento_instance
+        if sale.state == 'cancel':
+            increment_id = sale.name.split(instance.order_prefix)[1]
+            # This try except is placed because magento might not accept this
+            # order status change due to its workflow constraints.
+            # TODO: Find a better way to do it
+            try:
+                with magento.Order(
+                    instance.url, instance.api_user, instance.api_key
+                ) as order_api:
+                    order_api.cancel(increment_id)
+            except xmlrpclib.Fault, f:
+                if f.faultCode == 103:
+                    return sale
+
+        # TODO: Add logic for other sale states also
+
+        return sale
