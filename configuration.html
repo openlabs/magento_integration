@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration &mdash; Magento OpenERP Integration 7.0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '7.0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Magento OpenERP Integration 7.0.0.1 documentation" href="index.html" />
+    <link rel="next" title="Create Sale Orders in Magento" href="sale.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sale.html" title="Create Sale Orders in Magento"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Magento OpenERP Integration 7.0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="configuration">
+<span id="id1"></span><h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>The module requires certain initial configuration to be done in
+<a class="reference internal" href="#magento-instance">magento instance</a> to set the management tool.</p>
+<div class="section" id="magento-instance">
+<span id="id2"></span><h2><strong>Magento Instance</strong><a class="headerlink" href="#magento-instance" title="Permalink to this headline">¶</a></h2>
+<p>Go to <tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">&gt;&gt;</span> <span class="pre">Configuration</span></tt> and open <em>Magento Instances</em>.</p>
+<p>It refers to a magento installation identifiable via setting the API for
+<tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">Site</span> <span class="pre">URL</span></tt>, <tt class="docutils literal"><span class="pre">API</span> <span class="pre">User</span></tt> and <tt class="docutils literal"><span class="pre">API</span> <span class="pre">Password</span> <span class="pre">/</span> <span class="pre">Key</span></tt></p>
+<ol class="arabic">
+<li><p class="first">Create a new <tt class="docutils literal"><span class="pre">magento</span> <span class="pre">instance</span></tt> by clicking create.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/save_magento_instance.png"><img alt="_images/save_magento_instance.png" src="_images/save_magento_instance.png" style="width: 800px;" /></a>
+</div></blockquote>
+</li>
+<li><p class="first">Save the record with the <tt class="docutils literal"><span class="pre">Save</span></tt> button.</p>
+</li>
+<li><p class="first">The Connection can be tested by clicking on  <tt class="docutils literal"><span class="pre">Test</span> <span class="pre">Connection</span></tt> button
+shown on the top.</p>
+</li>
+<li><p class="first">If the connection with magento is successful, a window will pop-up as
+shown below in the screenshot:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/test_connection.png"><img alt="_images/test_connection.png" src="_images/test_connection.png" style="width: 800px;" /></a>
+</div></blockquote>
+</li>
+<li><p class="first">Now the websites can be imported by clicking <tt class="docutils literal"><span class="pre">Import</span> <span class="pre">Websites</span></tt> button.
+This will import all the websites for this magento instance. It will
+also import all the stores and store views related to this website. By
+clicking this a new window will pop-up as shown below:</p>
+<a class="reference internal image-reference" href="_images/Import_website.png"><img alt="_images/Import_website.png" src="_images/Import_website.png" style="width: 800px;" /></a>
+</li>
+</ol>
+<p>To know more about <em>Magento Website</em>, refer <a class="reference internal" href="#website">website</a>.</p>
+</div>
+<div class="section" id="magento-website">
+<span id="website"></span><h2><strong>Magento Website</strong><a class="headerlink" href="#magento-website" title="Permalink to this headline">¶</a></h2>
+<p>Go to <tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">&gt;&gt;</span> <span class="pre">Configuration</span></tt> and open <em>Website</em>.</p>
+<p>A magento instance can have multiple websites. They act as <em>parents</em> of stores.
+A website consists of one or more stores.</p>
+<p>After Importing Websites, magento instance will get all the websites, it&#8217;s
+stores and stores view. See below:</p>
+<a class="reference internal image-reference" href="_images/Website.png"><img alt="_images/Website.png" class="align-center" src="_images/Website.png" style="width: 800px;" /></a>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A website must be unique in an magento instance</p>
+</div>
+</div>
+<div class="section" id="website-store">
+<span id="id3"></span><h2><strong>Website Store</strong><a class="headerlink" href="#website-store" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">Website</span> <span class="pre">Store</span> <span class="pre">or</span> <span class="pre">Store</span> <span class="pre">view</span> <span class="pre">groups</span></tt></p>
+<p>Go to <tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">&gt;&gt;</span> <span class="pre">Configuration</span></tt> and open <em>Website Store</em>.</p>
+<a class="reference internal image-reference" href="_images/Website_store.png"><img alt="_images/Website_store.png" src="_images/Website_store.png" style="width: 800px;" /></a>
+<p>Stores are <tt class="docutils literal"><span class="pre">children</span></tt> of websites. The visibility of products and categories
+is managed on magento at store level by specifying the root category on a store.
+The setup for root catalog on stores does not reflect on OpenERP as there
+is no functional benefit of doing so.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A store must be unique in a website</p>
+</div>
+<p>Double click on any of of the website to import catalog by clicking on
+<tt class="docutils literal"><span class="pre">Import</span> <span class="pre">Catalog</span></tt>. This will import all the product categories and
+products for this magento instance, see screenshot:</p>
+<a class="reference internal image-reference" href="_images/Import_catalog.png"><img alt="_images/Import_catalog.png" src="_images/Import_catalog.png" style="width: 800px;" /></a>
+<p>Press continue to import the catalog, and it will get all the products, see
+below screenshot:</p>
+<a class="reference internal image-reference" href="_images/Products.png"><img alt="_images/Products.png" src="_images/Products.png" style="width: 800px;" /></a>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Each product in a website must be unique!</p>
+</div>
+</div>
+<div class="section" id="store-view">
+<span id="id4"></span><h2><strong>Store View</strong><a class="headerlink" href="#store-view" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">Website</span> <span class="pre">Store</span> <span class="pre">View</span></tt></p>
+<p>Go to <tt class="docutils literal"><span class="pre">Magento</span> <span class="pre">&gt;&gt;</span> <span class="pre">Configuration</span></tt> and open <em>Store View</em>.</p>
+<p>A store needs one or more store views to be browse-able in the front-end. It
+allows for multiple presentations of a store. Most implementations use store
+views for different languages.</p>
+<p>See screenshot below, it will get all the <tt class="docutils literal"><span class="pre">Store</span> <span class="pre">View</span></tt> with corresponding
+<tt class="docutils literal"><span class="pre">Store</span></tt></p>
+<a class="reference internal image-reference" href="_images/Store_view.png"><img alt="_images/Store_view.png" src="_images/Store_view.png" style="width: 800px;" /></a>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Configuration</a><ul>
+<li><a class="reference internal" href="#magento-instance"><strong>Magento Instance</strong></a></li>
+<li><a class="reference internal" href="#magento-website"><strong>Magento Website</strong></a></li>
+<li><a class="reference internal" href="#website-store"><strong>Website Store</strong></a></li>
+<li><a class="reference internal" href="#store-view"><strong>Store View</strong></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="introduction.html"
+                        title="previous chapter">Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sale.html"
+                        title="next chapter">Create Sale Orders in Magento</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/configuration.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sale.html" title="Create Sale Orders in Magento"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">Magento OpenERP Integration 7.0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Openlabs Technologies &amp; Consulting (P) Limited.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>
