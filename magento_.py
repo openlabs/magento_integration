@@ -5,7 +5,10 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) LTD
     :license: AGPLv3, see LICENSE for more details
 '''
+from copy import deepcopy
+
 from openerp.osv import fields, osv
+import magento
 
 
 class Instance(osv.Model):
@@ -209,6 +212,7 @@ class WebsiteStoreView(osv.Model):
         name=fields.char('Name', required=True, size=50),
         code=fields.char('Code', required=True, size=50, readonly=True,),
         magento_id=fields.integer('Magento ID', readonly=True,),
+        last_order_import_time=fields.datetime('Last Order Import Time'),
         store=fields.many2one(
             'magento.website.store', 'Store', required=True, readonly=True,
         ),
@@ -267,3 +271,62 @@ class WebsiteStoreView(osv.Model):
                 'magento_id': values['store_id']
             }, context=context
         )
+
+    def import_orders(self, cursor, user, ids=None, context=None):
+        """
+        Import orders from magento
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: list of store_view ids
+        :param context: dictionary of application context data
+        """
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for store_view in self.browse(cursor, user, ids, context):
+            self.import_orders_from_store_view(
+                cursor, user, store_view, context
+            )
+
+    def import_orders_from_store_view(self, cursor, user, store_view, context):
+        """
+        Imports orders from store view
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param store_view: browse record of store_view
+        :param context: dictionary of application context data
+        :return: list of sale ids
+        """
+        sale_obj = self.pool.get('sale.order')
+
+        instance = store_view.instance
+        new_context = deepcopy(context)
+        new_context.update({
+            'magento_instance': instance.id,
+            'magento_website': store_view.website.id,
+            'magento_store_view': store_view.id,
+        })
+        new_sales = []
+
+        with magento.Order(instance.url, instance.user, instance.key) as \
+                order_api:
+            # Filter orders with date and store_id using list()
+            # then get info of each order using info()
+            # and call find_or_create_using_magento_data on sale
+            filter = {'store_id': {'=': store_view.magento_id}}
+            if store_view.last_order_import_time:
+                filter.update({
+                    'updated_at': {'gteq': store_view.last_order_import_time}
+                })
+            orders = order_api.list(filter)
+            for order in orders:
+                new_sales.append(
+                    sale_obj.find_or_create_using_magento_data(
+                        cursor, user,
+                        order_api.info(order['increment_id']), new_context
+                    )
+                )
+
+        return new_sales

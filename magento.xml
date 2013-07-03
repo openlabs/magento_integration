@@ -299,6 +299,10 @@
                                 <label for="company"/>
                                 <h3><field name="company"/></h3>
                             </group>
+                            <group>
+                                <label for="last_order_import_time"/>
+                                <h3><field name="last_order_import_time"/></h3>
+                            </group>
                         </group>
                     </sheet>
                 </form>
@@ -314,6 +318,18 @@
         <menuitem action="store_view" id="menu_store_views"
             parent="menu_magento_config" sequence="20"
             groups="base.group_user"/>
+
+        <!-- Cron -->
+        <record model="ir.cron" id="ir_cron_get_sale_orders">
+            <field name="name">Import Sales from Magento</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model" eval="'magento.store.store_view'"/>
+            <field name="function" eval="'get_orders'"/>
+            <field name="args" eval="'()'"/>
+        </record>
 
     </data>
 </openerp>
