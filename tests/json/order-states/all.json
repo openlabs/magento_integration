@@ -1,0 +1,10 @@
+{
+    "canceled": "Canceled", 
+    "closed": "Closed", 
+    "complete": "Complete", 
+    "holded": "On Hold", 
+    "new": "New", 
+    "payment_review": "Payment Review", 
+    "pending_payment": "Pending Payment", 
+    "processing": "Processing"
+}

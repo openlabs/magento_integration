@@ -66,6 +66,36 @@ class TestSale(TestBase):
     Tests import of sale order
     """
 
+    def test_0005_import_sale_order_states(self):
+        """Test the import and creation of sale order states for an instance
+        """
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+            })
+
+            states_before_import = magento_order_state_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            states = magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+            states_after_import = magento_order_state_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+
+            self.assertTrue(states_after_import > states_before_import)
+
+            for state in states:
+                self.assertEqual(
+                    state.instance.id, context['magento_instance']
+                )
+
     def test_0010_import_sale_order_with_products(self):
         """
         Tests import of sale order using magento data
@@ -73,6 +103,7 @@ class TestSale(TestBase):
         sale_obj = POOL.get('sale.order')
         partner_obj = POOL.get('res.partner')
         category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -82,6 +113,11 @@ class TestSale(TestBase):
                 'magento_store_view': self.store_view_id,
                 'magento_website': self.website_id1,
             })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
 
             category_tree = load_json('categories', 'category_tree')
             category_obj.create_tree_using_magento_data(
@@ -121,6 +157,7 @@ class TestSale(TestBase):
         sale_obj = POOL.get('sale.order')
         partner_obj = POOL.get('res.partner')
         category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -130,6 +167,11 @@ class TestSale(TestBase):
                 'magento_store_view': self.store_view_id,
                 'magento_website': self.website_id1,
             })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
 
             category_tree = load_json('categories', 'category_tree')
             category_obj.create_tree_using_magento_data(

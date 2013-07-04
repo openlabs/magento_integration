@@ -73,6 +73,43 @@
                                     <field name="websites"/>
                                 </h3>
                             </page>
+                            <page string="Order States" groups="base.group_user">
+                                <h3>
+                                    <field name="order_states">
+                                        <form string="Order State" version="7.0">
+                                            <group>
+                                                <group>
+                                                    <label for="name"/>
+                                                    <h3><field name="name"/></h3>
+                                                </group>
+                                                <group>
+                                                    <label for="code"/>
+                                                    <h3><field name="code"/></h3>
+                                                </group>
+                                            </group>
+                                            <group>
+                                                <group>
+                                                    <label for="use_for_import"/>
+                                                    <h3><field name="use_for_import"/></h3>
+                                                </group>
+                                                <group attrs="{'invisible': [('use_for_import', '=', False)]}">
+                                                    <label for="openerp_state"/>
+                                                    <h3><field name="openerp_state" attrs="{'required': [('use_for_import', '=', True)]}"/></h3>
+                                                </group>
+                                            </group>
+                                        </form>
+                                        <!-- Would love to have this as editable="bottom" but openerp's so called beautiful view
+                                             screws up with the attrs being in place -->
+                                        <tree string="Order States">
+                                            <field name="name"/>
+                                            <field name="code"/>
+                                            <field name="use_for_import"/>
+                                            <field name="openerp_state"
+                                                   attrs="{'invisible': [('use_for_import', '=', False)], 'required': [('use_for_import', '=', True)]}"/>
+                                        </tree>
+                                    </field>
+                                </h3>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
