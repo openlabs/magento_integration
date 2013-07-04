@@ -7,9 +7,6 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) Limited
     :license: AGPLv3, see LICENSE for more details.
 """
-import xmlrpclib
-import socket
-
 from magento.catalog import Category, Product
 from openerp.osv import osv
 from openerp.tools.translate import _
@@ -36,18 +33,8 @@ class ImportCatalog(osv.TransientModel):
         )
         instance = website.instance
 
-        try:
-            self.import_category_tree(cursor, user, instance, context)
-            product_ids = self.import_products(cursor, user, website, context)
-
-        except (
-            xmlrpclib.Fault, IOError,
-            xmlrpclib.ProtocolError, socket.timeout
-        ):
-            raise osv.except_osv(
-                _('Incorrect API Settings!'),
-                _('Please check and correct the API settings on instance.')
-            )
+        self.import_category_tree(cursor, user, instance, context)
+        product_ids = self.import_products(cursor, user, website, context)
 
         return self.open_products(
             cursor, user, ids, product_ids, context
