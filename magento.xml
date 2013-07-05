@@ -153,6 +153,8 @@
                     <header>
                         <button name="%(action_magento_import_catalog)d"
                                 type='action' class="oe_highlight" string='Import Catalog'/>
+                        <button name="%(action_magento_export_inventory)d"
+                                type='action' class="oe_highlight" string='Export Inventory'/>
                     </header>
                     <sheet>
                         <group>
@@ -187,6 +189,11 @@
                             <page string="Stores" groups="base.group_user">
                                 <h3>
                                     <field name="stores"/>
+                                </h3>
+                            </page>
+                            <page string="Magento Products" groups="base.group_user">
+                                <h3>
+                                    <field name="magento_products"/>
                                 </h3>
                             </page>
                         </notebook>
@@ -309,8 +316,8 @@
                     <header>
                          <button name="%(action_magento_import_orders)d"
                                  type='action' class="oe_highlight" string='Import Orders'/>
-                        <button name="%(action_magento_export_orders)d"
-                          type='action' class="oe_highlight" string='Export Orders'/>
+                         <button name="%(action_magento_export_orders)d"
+                                 type='action' class="oe_highlight" string='Export Orders'/>
                     </header>
                     <sheet>
                         <group>

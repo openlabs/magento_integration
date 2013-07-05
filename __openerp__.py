@@ -30,6 +30,7 @@ This will import the following:
         'wizard/import_orders.xml',
         'wizard/export_orders.xml',
         'sale.xml',
+        'wizard/export_inventory.xml',
         'product.xml',
         'magento.xml',
     ],
