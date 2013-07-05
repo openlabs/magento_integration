@@ -349,7 +349,7 @@ class Product(osv.Model):
             cursor, user, [('name', '=', 'Unit(s)')], context=context
         )
 
-        product_id = self.create(cursor, user, {
+        product_values = {
             'name': product_data['name'],
             'categ_id': category_id,
             'default_code': product_data['sku'],
@@ -361,11 +361,18 @@ class Product(osv.Model):
             'standard_price': float(product_data.get('price') or 0.00),
             'description': product_data['description'],
             'magento_product_type': product_data['type'],
+            'procure_method': 'make_to_order',
             'magento_ids': [(0, 0, {
                 'magento_id': int(product_data['product_id']),
                 'website': context['magento_website'],
             })]
-        }, context=context)
+        }
+
+        if product_data['type'] == 'bundle':
+            # Bundles are produced
+            product_values['supply_method'] = 'produce'
+
+        product_id = self.create(cursor, user, product_values, context=context)
 
         return self.browse(cursor, user, product_id, context=context)
 

@@ -37,6 +37,7 @@ class MagentoOrderState(osv.Model):
             ('waiting_date', 'Waiting Schedule'),
             ('progress', 'Sales Order'),
             ('manual', 'Sale to Invoice'),
+            ('shipping_except', 'Shipping Exception'),
             ('invoice_except', 'Invoice Exception'),
             ('done', 'Done')
         ], 'OpenERP State'),
@@ -290,8 +291,6 @@ class Sale(osv.Model):
         currency_obj = self.pool.get('res.currency')
         store_view_obj = self.pool.get('magento.store.store_view')
         partner_obj = self.pool.get('res.partner')
-        uom_obj = self.pool.get('product.uom')
-        product_obj = self.pool.get('product.product')
 
         store_view = store_view_obj.browse(
             cursor, user, context['magento_store_view'], context
@@ -342,9 +341,6 @@ class Sale(osv.Model):
             partner_obj.find_or_create_address_as_partner_using_magento_data(
                 cursor, user, order_data['shipping_address'], partner, context
             )
-        unit, = uom_obj.search(
-            cursor, user, [('name', '=', 'Unit(s)')], context=context
-        )
 
         sale_data = {
             'name': instance.order_prefix + order_data['increment_id'],
@@ -358,20 +354,9 @@ class Sale(osv.Model):
             'magento_id': int(order_data['order_id']),
             'magento_instance': instance.id,
             'magento_store_view': store_view.id,
-            'order_line': [
-                (0, 0, {
-                    'name': item['name'],
-                    'price_unit': float(item['price']),
-                    'product_uom': unit,
-                    'product_uom_qty': float(item['qty_ordered']),
-                    'notes': item['product_options'],
-                    'product_id':
-                        product_obj.find_or_create_using_magento_id(
-                            cursor, user, item['product_id'],
-                            context=context
-                        ).id
-                }) for item in order_data['items']
-            ]
+            'order_line': self.get_item_line_data_using_magento_data(
+                cursor, user, order_data, context
+            )
         }
 
         if float(order_data.get('shipping_amount')):
@@ -400,6 +385,60 @@ class Sale(osv.Model):
         )
 
         return sale
+
+    def get_item_line_data_using_magento_data(
+        self, cursor, user, order_data, context
+    ):
+        """Make data for an item line from the magento data.
+        This method decides the actions to be taken on different product types
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param order_data: Order Data from magento
+        :param context: Application context
+        :return: List of data of order lines in required format
+        """
+        uom_obj = self.pool.get('product.uom')
+        product_obj = self.pool.get('product.product')
+        bom_obj = self.pool.get('mrp.bom')
+
+        unit, = uom_obj.search(
+            cursor, user, [('name', '=', 'Unit(s)')], context=context
+        )
+
+        line_data = []
+        for item in order_data['items']:
+            if not item['parent_item_id']:
+                # If its a top level product, create it
+                values = {
+                    'name': item['name'],
+                    'price_unit': float(item['price']),
+                    'product_uom': unit,
+                    'product_uom_qty': float(item['qty_ordered']),
+                    'notes': item['product_options'],
+                    'type': 'make_to_order',
+                    'product_id':
+                        product_obj.find_or_create_using_magento_id(
+                            cursor, user, item['product_id'],
+                            context=context
+                        ).id
+                }
+                line_data.append((0, 0, values))
+
+            # If the product is a child product of a bundle product, do not
+            # create a separate line for this.
+            if 'bundle_option' in item['product_options'] and \
+                    item['parent_item_id']:
+                continue
+
+        # Handle bundle products.
+        # Find/Create BoMs for bundle products
+        # If no bundle products exist in sale, nothing extra will happen
+        bom_obj.find_or_create_bom_for_magento_bundle(
+            cursor, user, order_data, context
+        )
+
+        return line_data
 
     def get_shipping_line_data_using_magento_data(
         self, cursor, user, order_data, context

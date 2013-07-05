@@ -10,6 +10,7 @@ import magento_
 import country
 import product
 import partner
+import bom
 import sale
 import currency
 
