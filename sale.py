@@ -14,18 +14,96 @@ from openerp.osv import fields, osv
 from openerp.tools.translate import _
 
 
-# Its a map between order states of openerp and magento
-# TODO: Replace by a better structure
-ORDER_STATES_MAP = {
-    'new': 'sent',
-    'canceled': 'cancel',
-    'closed': 'done',
-    'complete': 'done',
-    'processing': 'progress',
-    'holded': 'sent',
-    'pending_payment': 'sent',
-    'payment_review': 'sent',
-}
+class MagentoOrderState(osv.Model):
+    """Magento - OpenERP Order State map
+
+    This model stores a map of order states between OpenERP and Magento.
+    This allows the user to configure the states mapping according to his/her
+    convenience. This map is used to process orders in OpenERP when they are
+    imported. This is also used to map the order status on magento when
+    sales are exported. This also allows the user to determine in which state
+    he/she wants the order to be imported in.
+    """
+    _name = 'magento.order_state'
+    _description = 'Magento - OpenERP Order State map'
+
+    _columns = dict(
+        name=fields.char('Name', required=True, size=100, readonly=True),
+        code=fields.char('Code', required=True, size=100, readonly=True),
+        openerp_state=fields.selection([
+            ('draft', 'Draft Quotation'),
+            ('sent', 'Quotation Sent'),
+            ('cancel', 'Cancelled'),
+            ('waiting_date', 'Waiting Schedule'),
+            ('progress', 'Sales Order'),
+            ('manual', 'Sale to Invoice'),
+            ('invoice_except', 'Invoice Exception'),
+            ('done', 'Done')
+        ], 'OpenERP State'),
+        use_for_import=fields.boolean('Import orders in this magento state'),
+        instance=fields.many2one(
+            'magento.instance', 'Magento Instance', required=True,
+            ondelete='cascade',
+        )
+    )
+
+    _defaults = dict(
+        use_for_import=lambda *a: 1,
+    )
+
+    _sql_constraints = [
+        (
+            'code_instance_unique', 'unique(code, instance)',
+            'Each magento state must be unique by code in an instance'
+        ),
+    ]
+
+    def create_all_using_magento_data(
+        self, cursor, user, magento_data, context
+    ):
+        """This method expects a dictionary in which the key is the state
+        code on magento and value is the state name on magento.
+        This method will create each of the item in the dict as a record in
+        this model.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_data: Magento data in form of dict
+        :param context: Application context
+        :return: List of browse records of records created
+        """
+        new_records = []
+        default_order_states_map = {
+            # 'sent' here means quotation state, thats an OpenERP fuck up.
+            'new': 'sent',
+            'canceled': 'cancel',
+            'closed': 'done',
+            'complete': 'done',
+            'processing': 'progress',
+            'holded': 'sent',
+            'pending_payment': 'sent',
+            'payment_review': 'sent',
+        }
+
+        for code, name in magento_data.iteritems():
+            if self.search(cursor, user, [
+                ('code', '=', code),
+                ('instance', '=', context['magento_instance'])
+            ], context=context):
+                continue
+
+            new_records.append(
+                self.create(cursor, user, {
+                    'name': name,
+                    'code': code,
+                    'instance': context['magento_instance'],
+                    'openerp_state': default_order_states_map[code],
+                }, context=context)
+            )
+
+        return self.browse(
+            cursor, user, new_records, context=context
+        )
 
 
 class Sale(osv.Model):
@@ -386,8 +464,26 @@ class Sale(osv.Model):
         :param magento_state: State on magento the order was imported in
         :param context: Application context
         """
-        # TODO: Improve this for invoicing and shipping etc
-        openerp_state = ORDER_STATES_MAP[magento_state]
+        # TODO: Improve this method for invoicing and shipping etc
+        magento_order_state_obj = self.pool.get('magento.order_state')
+
+        state_ids = magento_order_state_obj.search(cursor, user, [
+            ('code', '=', magento_state),
+            ('instance', '=', context['magento_instance'])
+        ])
+
+        if not state_ids:
+            raise osv.except_osv(
+                _('Order state not found!'),
+                _('Order state not found/mapped in OpenERP! '
+                  'Please import order states on instance'
+                 )
+            )
+
+        state = magento_order_state_obj.browse(
+            cursor, user, state_ids[0], context=context
+        )
+        openerp_state = state.openerp_state
 
         # If order is canceled, just cancel it
         if openerp_state == 'cancel':

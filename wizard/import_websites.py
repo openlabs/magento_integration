@@ -5,9 +5,10 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) LTD
     :license: AGPLv3, see LICENSE for more details
 '''
-from ..api import Core
 from openerp.osv import osv
 from openerp.tools.translate import _
+
+from ..api import Core, OrderConfig
 
 
 class ImportWebsites(osv.TransientModel):
@@ -21,6 +22,7 @@ class ImportWebsites(osv.TransientModel):
 
         :param cursor: Database cursor
         :param user: ID of current user
+        :param ids: Record IDs
         :param context: Application context
         """
         Pool = self.pool
@@ -29,10 +31,25 @@ class ImportWebsites(osv.TransientModel):
         website_obj = Pool.get('magento.instance.website')
         store_obj = Pool.get('magento.website.store')
         store_view_obj = Pool.get('magento.store.store_view')
+        magento_order_state_obj = Pool.get('magento.order_state')
 
         instance = instance_obj.browse(
             cursor, user, context.get('active_id'), context
         )
+
+        context.update({
+            'magento_instance': instance.id
+        })
+
+        # Import order states
+        with OrderConfig(
+            instance.url, instance.api_user, instance.api_key
+        ) as order_config_api:
+            magento_order_state_obj.create_all_using_magento_data(
+                cursor, user, order_config_api.get_states(), context
+            )
+
+        # Import websites
         with Core(
             instance.url, instance.api_user, instance.api_key
         ) as core_api:
@@ -76,6 +93,13 @@ class ImportWebsites(osv.TransientModel):
     def open_websites(self, cursor, user, ids, instance, context):
         """
         Opens view for websites for current instance
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: Record IDs
+        :param instance: Browse record of magento.instance
+        :param context: Application context
+        :return: The websites tree view to be rendered
         """
         ir_model_data = self.pool.get('ir.model.data')
 

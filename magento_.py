@@ -37,7 +37,10 @@ class Instance(osv.Model):
         websites=fields.one2many(
             'magento.instance.website', 'instance', 'Websites',
             readonly=True,
-        )
+        ),
+        order_states=fields.one2many(
+            'magento.order_state', 'instance', 'Order States',
+        ),
     )
 
     def default_company(self, cursor, user, context):
@@ -318,6 +321,7 @@ class WebsiteStoreView(osv.Model):
         :return: list of sale ids
         """
         sale_obj = self.pool.get('sale.order')
+        magento_state_obj = self.pool.get('magento.order_state')
 
         instance = store_view.instance
         new_context = deepcopy(context)
@@ -328,16 +332,29 @@ class WebsiteStoreView(osv.Model):
         })
         new_sales = []
 
+        order_states = magento_state_obj.search(cursor, user, [
+            ('instance', '=', instance.id),
+            ('use_for_import', '=', True)
+        ])
+        order_states_to_import_in = [
+            state.code for state in magento_state_obj.browse(
+                cursor, user, order_states, context=context
+            )
+        ]
+
         with magento.Order(
             instance.url, instance.api_user, instance.api_key
         ) as order_api:
             # Filter orders with date and store_id using list()
             # then get info of each order using info()
             # and call find_or_create_using_magento_data on sale
-            filter = {'store_id': {'=': store_view.magento_id}}
+            filter = {
+                'store_id': {'=': store_view.magento_id},
+                'state': {'in': order_states_to_import_in},
+            }
             if store_view.last_order_import_time:
                 filter.update({
-                    'updated_at': {'gteq': store_view.last_order_import_time}
+                    'updated_at': {'gteq': store_view.last_order_import_time},
                 })
             self.write(cursor, user, [store_view.id], {
                 'last_order_import_time': time.strftime(
