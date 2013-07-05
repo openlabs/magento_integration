@@ -13,6 +13,10 @@
             <field name="arch" type="xml">
                 <notebook position="inside">
                     <page string="Magento" groups="base.group_user" >
+                        <group>
+                            <label for="magento_product_type"/>
+                            <h3><field name="magento_product_type"/></h3>
+                        </group>
                         <field name= "magento_ids"/>
                     </page>
                 </notebook>
