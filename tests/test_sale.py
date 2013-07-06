@@ -150,6 +150,10 @@ class TestSale(TestBase):
                 len(order.order_line), len(order_data['items']) + 1
             )
 
+            self.assertEqual(
+                order.amount_total, float(order_data['base_grand_total'])
+            )
+
     def test_0020_find_or_create_order_using_increment_id(self):
         """
         Tests finding and creating order using increment id
@@ -206,6 +210,190 @@ class TestSale(TestBase):
             self.assertEqual(
                 len(order.order_line), len(order_data['items']) + 1
             )
+            self.assertEqual(
+                order.amount_total, float(order_data['base_grand_total'])
+            )
+
+    def test_0030_import_sale_order_with_bundle_product(self):
+        """
+        Tests import of sale order with bundle product using magento data
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        product_obj = POOL.get('product.product')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 0)
+
+            order_data = load_json('orders', '300000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            self.assertEqual(order.state, 'manual')
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 1)
+
+            # Item lines + shipping line should be equal to lines on openerp
+            self.assertEqual(len(order.order_line), 2)
+
+            self.assertEqual(
+                order.amount_total, float(order_data['base_grand_total'])
+            )
+
+            # There should be a BoM for the bundle product
+            product = product_obj.find_or_create_using_magento_id(
+                txn.cursor, txn.user, 158, context
+            )
+            self.assertTrue(len(product.bom_ids), 1)
+            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
+
+            self.assertEqual(len(order.picking_ids[0].move_lines), 2)
+
+    def test_0033_import_sale_order_with_bundle_product_check_duplicate(self):
+        """
+        Tests import of sale order with bundle product using magento data
+        This tests that the duplication of BoMs doesnot happen
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        product_obj = POOL.get('product.product')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            order_data = load_json('orders', '300000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            # There should be a BoM for the bundle product
+            product = product_obj.find_or_create_using_magento_id(
+                txn.cursor, txn.user, 158, context
+            )
+            self.assertTrue(len(product.bom_ids), 1)
+            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
+
+            order_data = load_json('orders', '300000001-a')
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            # There should be a BoM for the bundle product
+            product = product_obj.find_or_create_using_magento_id(
+                txn.cursor, txn.user, 158, context
+            )
+            self.assertTrue(len(product.bom_ids), 1)
+            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
+
+    def test_0036_import_sale_with_bundle_plus_child_separate(self):
+        """
+        Tests import of sale order with bundle product using magento data
+        One of the children of the bundle is bought separately too
+        Make sure that the lines are created correctly
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            order_data = load_json('orders', '100000004')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            self.assertEqual(
+                order.amount_total, float(order_data['base_grand_total'])
+            )
+
+            # Item lines + shipping line should be equal to lines on openerp
+            self.assertEqual(len(order.order_line), 3)
 
 
 def suite():

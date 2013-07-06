@@ -5,7 +5,9 @@
     'author': 'Openlabs Technologies & Consulting Pvt Ltd.',
     'version': '0.1',
     'depends': [
-        'base', 'sale'
+        'base',
+        'sale',
+        'mrp',
     ],
     'category': 'Specific Industry Applications',
     'summary': 'Magento Integration',
