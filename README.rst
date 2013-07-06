@@ -18,6 +18,8 @@ created in the time frame of one week and is available for testing free of
 charge.
 
 
+.. image:: static/src/img/icon.png
+
 Features of Magento OpenERP connector
 --------------------------------------
 
