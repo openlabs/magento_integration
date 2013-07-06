@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_order_form" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form[@string='Sales Order Lines']/field[@name='name']" position="after">
+                    <group>
+                        <group colspan="1">
+                            <field name="name"/>
+                        </group>
+                        <group colspan="1">
+                            <field name="magento_notes"/>
+                        </group>
+                    </group>
+                </xpath>
+                <xpath expr="//form[@string='Sales Order Lines']/label[@for='name']" position="replace"></xpath>
+                <xpath expr="//form[@string='Sales Order Lines']/field[@name='name']" position="replace"></xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
