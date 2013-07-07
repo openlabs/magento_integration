@@ -10,8 +10,11 @@
 from copy import deepcopy
 from contextlib import nested
 import unittest
+import datetime
+from dateutil.relativedelta import relativedelta
 
 import magento
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from mock import patch, MagicMock
 from itsbroken.transaction import Transaction
 from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
@@ -53,6 +56,21 @@ def mock_customer_api(mock=None, data=None):
 
     handle = MagicMock(spec=magento.Customer)
     handle.info.side_effect = lambda id: load_json('customers', str(id))
+    if data is None:
+        handle.__enter__.return_value = handle
+    else:
+        handle.__enter__.return_value = data
+    mock.return_value = handle
+    return mock
+
+
+def mock_shipment_api(mock=None, data=None):
+    if mock is None:
+        mock = MagicMock(spec=magento.Shipment)
+
+    handle = MagicMock(spec=magento.Shipment)
+    handle.create.side_effect = lambda *args, **kwargs: 'Shipment created'
+    handle.addtrack.side_effect = lambda *args, **kwargs: True
     if data is None:
         handle.__enter__.return_value = handle
     else:
@@ -426,6 +444,482 @@ class TestSale(TestBase):
             for carrier in carriers:
                 self.assertEqual(
                     carrier.instance.id, context['magento_instance']
+                )
+
+    def test_0050_export_shipment(self):
+        """
+        Tests if shipments status is being exported for all the shipments
+        related to store view
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+        store_view_obj = POOL.get('magento.store.store_view')
+        carrier_obj = POOL.get('delivery.carrier')
+        product_obj = POOL.get('product.product')
+        magento_carrier_obj = POOL.get('magento.instance.carrier')
+        picking_obj = POOL.get('stock.picking')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, self.store_view_id, context=context
+            )
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 0)
+
+            order_data = load_json('orders', '100000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner = partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            magento_carrier_obj.create_all_using_magento_data(
+                txn.cursor, txn.user,
+                load_json('carriers', 'shipping_methods'),
+                context=context
+            )
+
+            product_id = product_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )[0]
+
+            # Create carrier
+            carrier_id = carrier_obj.create(
+                txn.cursor, txn.user, {
+                    'name': 'DHL',
+                    'partner_id': partner.id,
+                    'product_id': product_id,
+                }, context=context
+            )
+
+            # Set carrier for sale order
+            sale_obj.write(
+                txn.cursor, txn.user, order.id, {
+                    'carrier_id': carrier_id
+                }, context=context
+            )
+            order = sale_obj.browse(
+                txn.cursor, txn.user, order.id, context
+            )
+
+            # Set picking as delivered
+            picking_obj.action_assign(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_process(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_done(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+
+            pickings = picking_obj.browse(
+                txn.cursor, txn.user, map(int, order.picking_ids),
+                context=context
+            )
+
+            for picking in pickings:
+                self.assertFalse(picking.magento_increment_id)
+
+            with patch('magento.Shipment', mock_shipment_api(), create=True):
+
+                store_view_obj.export_shipment_status_to_magento(
+                    txn.cursor, txn.user, store_view, context=context
+                )
+
+            pickings = picking_obj.browse(
+                txn.cursor, txn.user, map(int, order.picking_ids),
+                context=context
+            )
+
+            for picking in pickings:
+                self.assertTrue(picking.magento_increment_id)
+
+    def test_0060_export_shipment_status_with_tracking_info(self):
+        """
+        Tests if Tracking information is being updated for shipments
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+        store_view_obj = POOL.get('magento.store.store_view')
+        carrier_obj = POOL.get('delivery.carrier')
+        product_obj = POOL.get('product.product')
+        magento_carrier_obj = POOL.get('magento.instance.carrier')
+        picking_obj = POOL.get('stock.picking')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, self.store_view_id, context=context
+            )
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 0)
+
+            order_data = load_json('orders', '100000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner = partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            magento_carrier_obj.create_all_using_magento_data(
+                txn.cursor, txn.user,
+                load_json('carriers', 'shipping_methods'),
+                context=context
+            )
+
+            product_id = product_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )[0]
+
+            # Create carrier
+            carrier_id = carrier_obj.create(
+                txn.cursor, txn.user, {
+                    'name': 'DHL',
+                    'partner_id': partner.id,
+                    'product_id': product_id,
+                }, context=context
+            )
+
+            # Set carrier for sale order
+            sale_obj.write(
+                txn.cursor, txn.user, order.id, {
+                    'carrier_id': carrier_id
+                }, context=context
+            )
+            order = sale_obj.browse(
+                txn.cursor, txn.user, order.id, context
+            )
+
+            # Set picking as delivered
+            picking_obj.action_assign(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_process(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_done(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+
+            with patch('magento.Shipment', mock_shipment_api(), create=True):
+                # Export shipment status
+                shipments = store_view_obj.export_shipment_status_to_magento(
+                    txn.cursor, txn.user, store_view, context=context
+                )
+
+                # Export Tracking info
+                self.assertEqual(
+                    store_view_obj.export_tracking_info_to_magento(
+                        txn.cursor, txn.user, shipments[0], context=context
+                    ),
+                    True
+                )
+
+    def test_0070_export_shipment_status_with_last_export_date_case1(self):
+        """
+        Tests that if last shipment export time is there then shipment status
+        cannot be exported for shipments delivered before last shipment
+        export time
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+        store_view_obj = POOL.get('magento.store.store_view')
+        carrier_obj = POOL.get('delivery.carrier')
+        product_obj = POOL.get('product.product')
+        magento_carrier_obj = POOL.get('magento.instance.carrier')
+        picking_obj = POOL.get('stock.picking')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, self.store_view_id, context=context
+            )
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 0)
+
+            order_data = load_json('orders', '100000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner = partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            magento_carrier_obj.create_all_using_magento_data(
+                txn.cursor, txn.user,
+                load_json('carriers', 'shipping_methods'),
+                context=context
+            )
+
+            product_id = product_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )[0]
+
+            # Create carrier
+            carrier_id = carrier_obj.create(
+                txn.cursor, txn.user, {
+                    'name': 'DHL',
+                    'partner_id': partner.id,
+                    'product_id': product_id,
+                }, context=context
+            )
+
+            # Set carrier for sale order
+            sale_obj.write(
+                txn.cursor, txn.user, order.id, {
+                    'carrier_id': carrier_id
+                }, context=context
+            )
+            order = sale_obj.browse(
+                txn.cursor, txn.user, order.id, context
+            )
+
+            # Set picking as delivered
+            picking_obj.action_assign(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_process(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_done(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+
+            pickings = picking_obj.browse(
+                txn.cursor, txn.user, map(int, order.picking_ids),
+                context=context
+            )
+
+            export_date = datetime.date.today() + relativedelta(days=1)
+            store_view_obj.write(
+                txn.cursor, txn.user, store_view.id, {
+                    'last_shipment_export_time': export_date.strftime(
+                        DEFAULT_SERVER_DATETIME_FORMAT
+                    )
+                }, context=context
+            )
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, store_view.id, context=context
+            )
+
+            # Since here shipment's write date is smaller than last export
+            # time. so it should not export status for these shipment
+
+            for picking in pickings:
+                self.assertFalse(
+                    picking.write_date >= store_view.last_shipment_export_time
+                )
+
+            with self.assertRaises(Exception):
+                with patch(
+                    'magento.Shipment', mock_shipment_api(), create=True
+                ):
+                    # Export shipment status
+                    store_view_obj.export_shipment_status_to_magento(
+                        txn.cursor, txn.user, store_view, context=context
+                    )
+
+    def test_0080_export_shipment_status_with_last_export_date_case2(self):
+        """
+        Tests that if last shipment export time is there then shipment status
+        are exported for shipments delivered after last shipment export time
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        magento_order_state_obj = POOL.get('magento.order_state')
+        store_view_obj = POOL.get('magento.store.store_view')
+        carrier_obj = POOL.get('delivery.carrier')
+        product_obj = POOL.get('product.product')
+        magento_carrier_obj = POOL.get('magento.instance.carrier')
+        picking_obj = POOL.get('stock.picking')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, self.store_view_id, context=context
+            )
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
+            self.assertEqual(len(orders), 0)
+
+            order_data = load_json('orders', '100000001')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner = partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            magento_carrier_obj.create_all_using_magento_data(
+                txn.cursor, txn.user,
+                load_json('carriers', 'shipping_methods'),
+                context=context
+            )
+
+            product_id = product_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )[0]
+
+            # Create carrier
+            carrier_id = carrier_obj.create(
+                txn.cursor, txn.user, {
+                    'name': 'DHL',
+                    'partner_id': partner.id,
+                    'product_id': product_id,
+                }, context=context
+            )
+
+            # Set carrier for sale order
+            sale_obj.write(
+                txn.cursor, txn.user, order.id, {
+                    'carrier_id': carrier_id
+                }, context=context
+            )
+            order = sale_obj.browse(
+                txn.cursor, txn.user, order.id, context
+            )
+
+            # Set picking as delivered
+            picking_obj.action_assign(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_process(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+            picking_obj.action_done(
+                txn.cursor, txn.user, map(int, order.picking_ids)
+            )
+
+            pickings = picking_obj.browse(
+                txn.cursor, txn.user, map(int, order.picking_ids),
+                context=context
+            )
+
+            export_date = datetime.date.today() - relativedelta(days=1)
+            store_view_obj.write(
+                txn.cursor, txn.user, store_view.id, {
+                    'last_shipment_export_time': export_date.strftime(
+                        DEFAULT_SERVER_DATETIME_FORMAT
+                    )
+                }, context=context
+            )
+            store_view = store_view_obj.browse(
+                txn.cursor, txn.user, store_view.id, context=context
+            )
+
+            # Since write date is greater than last shipment export time. It
+            # should export shipment status successfully
+            for picking in pickings:
+                self.assertTrue(
+                    picking.write_date >= store_view.last_shipment_export_time
+                )
+
+            with patch('magento.Shipment', mock_shipment_api(), create=True):
+                # Export shipment status
+                store_view_obj.export_shipment_status_to_magento(
+                    txn.cursor, txn.user, store_view, context=context
                 )
 
 

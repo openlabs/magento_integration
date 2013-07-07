@@ -666,3 +666,42 @@ class MagentoInstanceCarrier(osv.Model):
         return carrier_ids and self.browse(
             cursor, user, carrier_ids[0], context
         ) or None
+
+
+class CustomerShipment(osv.Model):
+    "Customer Shipment"
+
+    _inherit = 'stock.picking'
+
+    _columns = dict(
+        magento_instance=fields.related(
+            'sale_id', 'magento_instance', type='many2one',
+            relation='magento.instance', string=' Magento Instance',
+            readonly=True, store=True
+        ),
+        magento_store_view=fields.related(
+            'sale_id', 'magento_store_view', type='many2one',
+            relation='magento.store.store_view', string="Magento Store View",
+            readonly=True,
+        ),
+        # Shipment has a separate increment ID
+        magento_increment_id=fields.char(
+            "Magento Increment ID", readonly=True
+        ),
+        write_date=fields.datetime("Write Date", readonly=True),
+        is_tracking_exported_to_magento=fields.boolean(
+            "Is Tracking Info Exported To Magento"
+        ),
+    )
+
+    _defaults = dict(
+        is_tracking_exported_to_magento=lambda *a: 0,
+    )
+
+    _sql_constraints = [
+        (
+            'instance_increment_id_unique',
+            'UNIQUE(magento_instance, magento_increment_id)',
+            'Customer shipment should be unique in magento instance'
+        ),
+    ]

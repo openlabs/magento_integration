@@ -5,6 +5,8 @@
     :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) LTD
     :license: AGPLv3, see LICENSE for more details
 '''
+import logging
+import xmlrpclib
 from copy import deepcopy
 import time
 
@@ -15,6 +17,9 @@ import openerp.addons.decimal_precision as dp
 import magento
 
 from .api import OrderConfig
+
+
+_logger = logging.getLogger(__name__)
 
 
 class Instance(osv.Model):
@@ -414,6 +419,13 @@ class WebsiteStoreView(osv.Model):
             'store', 'shop', type='many2one', relation='sale.shop',
             string='Sales Shop', readonly=True,
         ),
+        last_shipment_export_time=fields.datetime('Last Shipment Export Time'),
+        export_tracking_information=fields.boolean(
+            'Export tracking information', help='Checking this will make sure'
+            ' that only the done shipments which have a carrier and tracking '
+            'reference are exported. This will update carrier and tracking '
+            'reference on magento for the exported shipments as well.'
+        )
     )
 
     _sql_constraints = [(
@@ -588,6 +600,182 @@ class WebsiteStoreView(osv.Model):
             ))
 
         return exported_sales
+
+    def export_shipment_status(self, cursor, user, ids=None, context=None):
+        """
+        Export Shipment status for shipments related to current store view.
+        This method is called by cron.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: List of store_view ids
+        :param context: Dictionary of application context
+        """
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for store_view in self.browse(cursor, user, ids, context):
+            self.export_shipment_status_to_magento(
+                cursor, user, store_view, context
+            )
+
+    def export_shipment_status_to_magento(
+        self, cursor, user, store_view, context
+    ):
+        """
+        Exports shipment status for shipments to magento, if they are shipped
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param store_view: Browse record of Store View
+        :param context: Dictionary of application context
+        :return: List of browse record of shipment
+        """
+        shipment_obj = self.pool.get('stock.picking')
+        instance_obj = self.pool.get('magento.instance')
+
+        instance = instance_obj.browse(
+            cursor, user, context['magento_instance'], context
+        )
+
+        domain = [
+            ('sale_id', '!=', None),
+            ('sale_id.magento_store_view', '=', store_view.id),
+            ('state', '=', 'done'),
+            ('sale_id.magento_id', '!=', None),
+            ('is_tracking_exported_to_magento', '=', False),
+        ]
+
+        if store_view.last_shipment_export_time:
+            domain.append(
+                ('write_date', '>=', store_view.last_shipment_export_time)
+            )
+
+        if store_view.export_tracking_information:
+            domain.extend([
+                ('carrier_tracking_ref', '!=', None),
+                ('carrier_id', '!=', None),
+            ])
+
+        shipment_ids = shipment_obj.search(
+            cursor, user, domain, context=context
+        )
+        shipments = []
+        if not shipment_ids:
+            raise osv.except_osv(
+                _('Shipments Not Found!'),
+                _(
+                    'Seems like there are no shipments to be exported '
+                    'for the orders in this store view'
+                )
+            )
+
+        for shipment in shipment_obj.browse(
+            cursor, user, shipment_ids, context
+        ):
+            shipments.append(shipment)
+            increment_id = shipment.sale_id.name[
+                len(instance.order_prefix): len(shipment.sale_id.name)
+            ]
+
+            try:
+                # FIXME This method expects the shipment to be made for all
+                # products in one picking. Split shipments is not supported yet
+                with magento.Shipment(
+                    instance.url, instance.api_user, instance.api_key
+                ) as shipment_api:
+                    shipment_increment_id = shipment_api.create(
+                        order_increment_id=increment_id, items_qty={}
+                    )
+                    shipment_obj.write(
+                        cursor, user, shipment.id, {
+                            'magento_increment_id': shipment_increment_id,
+                        }, context=context
+                    )
+
+                    # Rebrowse the record
+                    shipment = shipment_obj.browse(
+                        cursor, user, shipment.id, context=context
+                    )
+                    if store_view.export_tracking_information:
+                        self.export_tracking_info_to_magento(
+                            cursor, user, shipment, context
+                        )
+            except xmlrpclib.Fault, fault:
+                if fault.faultCode == 102:
+                    # A shipment already exists for this order, log this
+                    # detail and continue
+                    _logger.info(
+                        'Shipment for sale %s already exists on magento'
+                        % shipment.sale_id.name
+                    )
+                    continue
+
+        self.write(cursor, user, store_view.id, {
+            'last_shipment_export_time': time.strftime(
+                DEFAULT_SERVER_DATETIME_FORMAT
+            )
+        }, context=context)
+
+        return shipments
+
+    def export_tracking_info_to_magento(
+        self, cursor, user, shipment, context
+    ):
+        """
+        Export tracking info to magento for the specified shipment.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param shipment: Browse record of shipment
+        :param context: Dictionary of application context
+        :return: Shipment increment ID
+        """
+        magento_carrier_obj = self.pool.get('magento.instance.carrier')
+        instance_obj = self.pool.get('magento.instance')
+        picking_obj = self.pool.get('stock.picking')
+
+        instance = instance_obj.browse(
+            cursor, user, context['magento_instance'], context
+        )
+
+        carriers = magento_carrier_obj.search(
+            cursor, user, [
+                ('instance', '=', instance.id),
+                ('carrier', '=', shipment.carrier_id.id)
+            ], context=context
+        )
+
+        if not carriers:
+            _logger.error(
+                'No matching carrier has been configured on instance %s'
+                ' for the magento carrier/shipping method %s'
+                % (instance.name, shipment.carrier_id.name)
+            )
+            return
+
+        carrier = magento_carrier_obj.browse(
+            cursor, user, carriers[0], context
+        )
+
+        # Add tracking info to the shipment on magento
+        with magento.Shipment(
+            instance.url, instance.api_user, instance.api_key
+        ) as shipment_api:
+            shipment_increment_id = shipment_api.addtrack(
+                shipment.magento_increment_id,
+                carrier.code,
+                carrier.title,
+                shipment.carrier_tracking_ref,
+            )
+
+            picking_obj.write(
+                cursor, user, shipment.id, {
+                    'is_tracking_exported_to_magento': True
+                }, context=context
+            )
+
+        return shipment_increment_id
 
 
 class StorePriceTier(osv.Model):
