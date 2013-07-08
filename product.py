@@ -331,7 +331,7 @@ class Product(osv.Model):
         :returns: Browse record of product created
         """
         category_obj = self.pool.get('product.category')
-        uom_obj = self.pool.get('product.uom')
+        website_obj = self.pool.get('magento.instance.website')
 
         # Get only the first category from list of categories
         # If not category is found, put product under unclassified category
@@ -345,15 +345,15 @@ class Product(osv.Model):
             category_id, = category_obj.search(cursor, user, [
                 ('name', '=', 'Unclassified Magento Products')
             ], context=context)
-        unit, = uom_obj.search(
-            cursor, user, [('name', '=', 'Unit(s)')], context=context
-        )
 
         product_values = {
             'name': product_data['name'],
             'categ_id': category_id,
             'default_code': product_data['sku'],
-            'uom_id': unit,
+            'uom_id':
+                website_obj.get_default_uom(
+                    cursor, user, context
+                ).id,
             'list_price': float(
                 product_data.get('special_price') or
                 product_data.get('price') or 0.00

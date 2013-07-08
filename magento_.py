@@ -124,12 +124,39 @@ class InstanceWebsite(osv.Model):
             'magento.website.product', 'website', 'Product',
             readonly=True
         ),
+        default_product_uom=fields.many2one(
+            'product.uom', 'Default Product UOM',
+            help="This is used to set UOM while creating products imported "
+            "from magento",
+        ),
     )
 
     _sql_constraints = [(
         'magento_id_instance_unique', 'unique(magento_id, instance)',
         'A website must be unique in an instance'
     )]
+
+    def get_default_uom(self, cursor, user, context):
+        """
+        Get default product uom for website.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param context: Application context
+        :return: UOM browse record
+        """
+        website = self.browse(
+            cursor, user, context['magento_website'], context=context
+        )
+
+        if not website.default_product_uom:
+            raise osv.except_osv(
+                _('UOM not found!'),
+                _('Please define Default Product UOM for website %s') %
+                website.name,
+            )
+
+        return website.default_product_uom
 
     def find_or_create(self, cursor, user, instance_id, values, context):
         """

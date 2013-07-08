@@ -407,13 +407,9 @@ class Sale(osv.Model):
         :param context: Application context
         :return: List of data of order lines in required format
         """
-        uom_obj = self.pool.get('product.uom')
+        website_obj = self.pool.get('magento.instance.website')
         product_obj = self.pool.get('product.product')
         bom_obj = self.pool.get('mrp.bom')
-
-        unit, = uom_obj.search(
-            cursor, user, [('name', '=', 'Unit(s)')], context=context
-        )
 
         line_data = []
         for item in order_data['items']:
@@ -422,7 +418,10 @@ class Sale(osv.Model):
                 values = {
                     'name': item['name'],
                     'price_unit': float(item['price']),
-                    'product_uom': unit,
+                    'product_uom':
+                        website_obj.get_default_uom(
+                            cursor, user, context
+                        ).id,
                     'product_uom_qty': float(item['qty_ordered']),
                     'notes': item['product_options'],
                     'type': 'make_to_order',
@@ -460,16 +459,15 @@ class Sale(osv.Model):
         :param order_data: Order Data from magento
         :param context: Application context
         """
-        uom_obj = self.pool.get('product.uom')
-
-        unit, = uom_obj.search(
-            cursor, user, [('name', '=', 'Unit(s)')], context=context
-        )
+        website_obj = self.pool.get('magento.instance.website')
 
         return (0, 0, {
             'name': 'Magento Shipping',
             'price_unit': float(order_data.get('shipping_amount', 0.00)),
-            'product_uom': unit,
+            'product_uom':
+                website_obj.get_default_uom(
+                    cursor, user, context
+                ).id,
             'notes': ' - '.join([
                 order_data['shipping_method'],
                 order_data['shipping_description']
@@ -487,16 +485,15 @@ class Sale(osv.Model):
         :param order_data: Order Data from magento
         :param context: Application context
         """
-        uom_obj = self.pool.get('product.uom')
-
-        unit, = uom_obj.search(
-            cursor, user, [('name', '=', 'Unit(s)')], context=context
-        )
+        website_obj = self.pool.get('magento.instance.website')
 
         return (0, 0, {
             'name': order_data['discount_description'] or 'Magento Discount',
             'price_unit': float(order_data.get('discount_amount', 0.00)),
-            'product_uom': unit,
+            'product_uom':
+                website_obj.get_default_uom(
+                    cursor, user, context
+                ).id,
             'notes': order_data['discount_description'],
         })
 
