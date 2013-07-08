@@ -10,7 +10,10 @@ import time
 
 from openerp.osv import fields, osv
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools.translate import _
 import magento
+
+from .api import OrderConfig
 
 
 class Instance(osv.Model):
@@ -65,6 +68,31 @@ class Instance(osv.Model):
     _sql_constraints = [
         ('url_unique', 'unique(url)', 'URL of an instance must be unique'),
     ]
+
+    def import_order_states(self, cursor, user, ids, context):
+        """
+        Imports order states for current instance
+
+        :param cursor: Database cursor
+        :param user: Current User ID
+        :param ids: Record IDs
+        :param context: Application context
+        """
+        magento_order_state_obj = self.pool.get('magento.order_state')
+
+        for instance in self.browse(cursor, user, ids, context):
+
+            context.update({
+                'magento_instance': instance.id
+            })
+
+            # Import order states
+            with OrderConfig(
+                instance.url, instance.api_user, instance.api_key
+            ) as order_config_api:
+                magento_order_state_obj.create_all_using_magento_data(
+                    cursor, user, order_config_api.get_states(), context
+                )
 
 
 class InstanceWebsite(osv.Model):
@@ -341,6 +369,15 @@ class WebsiteStoreView(osv.Model):
                 cursor, user, order_states, context=context
             )
         ]
+
+        if not order_states_to_import_in:
+            raise osv.except_osv(
+                _('Order States Not Found!'),
+                _(
+                    'No order states found for importing orders! '
+                    'Please configure the order states on magento instance'
+                )
+            )
 
         with magento.Order(
             instance.url, instance.api_user, instance.api_key

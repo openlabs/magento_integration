@@ -32,6 +32,10 @@
                                 type='action' class="oe_highlight" string='Test Connection'/>
                         <button name="%(action_magento_import_websites)d" 
                                 type='action' class="oe_highlight" string='Import Websites'/>
+
+                        <button name="import_order_states"
+                            string="Import order states" type="object"
+                            groups="base.group_user"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
