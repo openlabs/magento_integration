@@ -7,11 +7,27 @@
 """
 from copy import deepcopy
 import unittest
+import magento
 
+from mock import patch, MagicMock
 from itsbroken.transaction import Transaction
 from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
 
 from test_base import TestBase, load_json
+
+
+def mock_inventory_api(mock=None, data=None):
+    if mock is None:
+        mock = MagicMock(spec=magento.Inventory)
+
+    handle = MagicMock(spec=magento.Inventory)
+    handle.update.side_effect = lambda id, data: True
+    if data is None:
+        handle.__enter__.return_value = handle
+    else:
+        handle.__enter__.return_value = data
+    mock.return_value = handle
+    return mock
 
 
 class TestProduct(TestBase):
@@ -257,6 +273,45 @@ class TestProduct(TestBase):
             self.assertEqual(
                 product.categ_id.name, 'Unclassified Magento Products'
             )
+
+    def test_0080_export_product_stock_information(self):
+        """
+        This test checks if the method to call for updation of product
+        stock info does not break anywhere in between.
+        This method does not check the API calls
+        """
+        product_obj = POOL.get('product.product')
+        website_obj = POOL.get('magento.instance.website')
+        category_obj = POOL.get('product.category')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_website': self.website_id1,
+            })
+
+            category_data = load_json('categories', '17')
+
+            category_obj.create_using_magento_data(
+                txn.cursor, txn.user, category_data, context=context
+            )
+
+            product_data = load_json('products', '135')
+            product_obj.find_or_create_using_magento_data(
+                txn.cursor, txn.user, product_data, context
+            )
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, context
+            )
+
+            with patch(
+                'magento.Inventory', mock_inventory_api(), create=True
+            ):
+                website_obj.export_inventory_to_magento(
+                    txn.cursor, txn.user, website, context
+                )
 
 
 def suite():

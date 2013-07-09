@@ -120,6 +120,10 @@ class InstanceWebsite(osv.Model):
             'magento.website.store', 'website', 'Stores',
             readonly=True,
         ),
+        magento_products=fields.one2many(
+            'magento.website.product', 'website', 'Product',
+            readonly=True
+        ),
     )
 
     _sql_constraints = [(
@@ -158,6 +162,59 @@ class InstanceWebsite(osv.Model):
                 'magento_id': values['website_id'],
             }, context=context
         )
+
+    def export_inventory(self, cursor, user, ids=None, context=None):
+        """
+        Exports inventory stock information to magento
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: List of ids of website
+        :param context: Application context
+        """
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for website in self.browse(cursor, user, ids, context):
+            self.export_inventory_to_magento(
+                cursor, user, website, context
+            )
+
+    def export_inventory_to_magento(
+        self, cursor, user, website, context
+    ):
+        """
+        Exports stock data of products from openerp to magento for this
+        website
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param website: Browse record of website
+        :param context: Application context
+        :return: List of products
+        """
+        products = []
+        instance = website.instance
+        for magento_product in website.magento_products:
+            products.append(magento_product.product)
+
+            is_in_stock = '1' if magento_product.product.qty_available > 0 \
+                else '0'
+
+            product_data = {
+                'qty': magento_product.product.qty_available,
+                'is_in_stock': is_in_stock,
+            }
+
+            # Update stock information to magento
+            with magento.Inventory(
+                instance.url, instance.api_user, instance.api_key
+            ) as inventory_api:
+                inventory_api.update(
+                    magento_product.magento_id, product_data
+                )
+
+        return products
 
 
 class WebsiteStore(osv.Model):

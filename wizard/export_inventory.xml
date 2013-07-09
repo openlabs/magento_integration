@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_export_inventory" model="ir.ui.view">
+            <field name="name">magento.instance.website.export_inventory.form</field>
+            <field name="model">magento.instance.website.export_inventory</field>
+            <field name="arch" type="xml">
+                <form string="Export Inventory" version="7.0">
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will export product stock data to
+                            magento for this website.
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="export_inventory" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_export_inventory" model="ir.actions.act_window">
+            <field name="name">Export Inventory</field>
+            <field name="res_model">magento.instance.website.export_inventory</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_export_inventory"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>
