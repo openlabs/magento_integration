@@ -423,7 +423,7 @@ class Sale(osv.Model):
                             cursor, user, context
                         ).id,
                     'product_uom_qty': float(item['qty_ordered']),
-                    'notes': item['product_options'],
+                    'magento_notes': item['product_options'],
                     'type': 'make_to_order',
                     'product_id':
                         product_obj.find_or_create_using_magento_id(
@@ -468,7 +468,7 @@ class Sale(osv.Model):
                 website_obj.get_default_uom(
                     cursor, user, context
                 ).id,
-            'notes': ' - '.join([
+            'magento_notes': ' - '.join([
                 order_data['shipping_method'],
                 order_data['shipping_description']
             ])
@@ -494,7 +494,7 @@ class Sale(osv.Model):
                 website_obj.get_default_uom(
                     cursor, user, context
                 ).id,
-            'notes': order_data['discount_description'],
+            'magento_notes': order_data['discount_description'],
         })
 
     def process_sale_using_magento_state(

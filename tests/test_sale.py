@@ -260,6 +260,7 @@ class TestSale(TestBase):
                 )
 
             self.assertEqual(order.state, 'manual')
+            self.assertTrue('bundle' in order.order_line[0].magento_notes)
 
             orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
             self.assertEqual(len(orders), 1)
