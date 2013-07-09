@@ -396,6 +396,38 @@ class TestSale(TestBase):
             # Item lines + shipping line should be equal to lines on openerp
             self.assertEqual(len(order.order_line), 3)
 
+    def test_0040_import_carriers(self):
+        """
+        Test If all carriers are being imported from magento
+        """
+        magento_carrier_obj = POOL.get('magento.instance.carrier')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+            })
+
+            carriers_before_import = magento_carrier_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            carriers = magento_carrier_obj.create_all_using_magento_data(
+                txn.cursor, txn.user,
+                load_json('carriers', 'shipping_methods'),
+                context=context
+            )
+            carriers_after_import = magento_carrier_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+
+            self.assertTrue(carriers_after_import > carriers_before_import)
+            for carrier in carriers:
+                self.assertEqual(
+                    carrier.instance.id, context['magento_instance']
+                )
+
 
 def suite():
     _suite = unittest.TestSuite()

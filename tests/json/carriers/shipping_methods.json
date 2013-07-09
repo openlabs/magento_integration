@@ -1,0 +1,14 @@
+[
+ {
+  "code": "flatrate", 
+  "label": "Flat Rate"
+ }, 
+ {
+  "code": "dhlint", 
+  "label": "DHL"
+ }, 
+ {
+  "code": "googlecheckout", 
+  "label": "googlecheckout"
+ }
+]

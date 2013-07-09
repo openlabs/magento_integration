@@ -575,3 +575,94 @@ class Sale(osv.Model):
         # TODO: Add logic for other sale states also
 
         return sale
+
+
+class MagentoInstanceCarrier(osv.Model):
+    "Magento Instance Carrier"
+
+    _name = 'magento.instance.carrier'
+
+    _columns = dict(
+        code=fields.char("Code", readonly=True),
+        title=fields.char('Title', readonly=True),
+        carrier=fields.many2one('delivery.carrier', 'Carrier'),
+        instance=fields.many2one(
+            'magento.instance', 'Magento Instance', readonly=True
+        ),
+    )
+
+    _sql_constraints = [(
+        'code_instance_unique', 'unique(code, instance)',
+        'Shipping method must be unique in instance'
+    )]
+
+    def create_all_using_magento_data(
+        self, cursor, user, magento_data, context
+    ):
+        """
+        Creates record for list of carriers sent by magento.
+        It creates a new carrier only if one with the same code does not
+        exist for this instance.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param magento_data: List of Dictionary of carriers sent by magento
+        :param context: Application context
+        :return: List of Browse record of carriers Created/Found
+        """
+        carriers = []
+        for data in magento_data:
+            carrier = self.find_using_magento_data(
+                cursor, user, data, context
+            )
+            if carrier:
+                carriers.append(carrier)
+            else:
+                # Create carrier if not found
+                carriers.append(
+                    self.create_using_magento_data(
+                        cursor, user, data, context
+                    )
+                )
+        return carriers
+
+    def create_using_magento_data(self, cursor, user, carrier_data, context):
+        """
+         Create record for carrier data sent by magento
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param carrier_data: Dictionary of carrier sent by magento
+        :param context: Application context
+        :return: Browse record of carrier created
+        """
+        carrier_id = self.create(
+            cursor, user, {
+                'code': carrier_data['code'],
+                'title': carrier_data['label'],
+                'instance': context['magento_instance'],
+            }, context=context
+        )
+
+        return self.browse(cursor, user, carrier_id, context)
+
+    def find_using_magento_data(self, cursor, user, carrier_data, context):
+        """
+        Search for an existing carrier by matching code and instance.
+        If found, return its browse record else None
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param carrier_data: Dictionary of carrier sent by magento
+        :param context: Application context
+        :return: Browse record of carrier found or None
+        """
+        carrier_ids = self.search(
+            cursor, user, [
+                ('code', '=', carrier_data['code']),
+                ('instance', '=', context['magento_instance']),
+            ], context=context
+        )
+        return carrier_ids and self.browse(
+            cursor, user, carrier_ids[0], context
+        ) or None

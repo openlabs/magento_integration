@@ -32,6 +32,8 @@
                                 type='action' class="oe_highlight" string='Test Connection'/>
                         <button name="%(action_magento_import_websites)d" 
                                 type='action' class="oe_highlight" string='Import Websites'/>
+                        <button name="%(action_magento_import_carriers)d"
+                                type='action' class="oe_highlight" string='Import Carriers / Shipping Methods'/>
 
                         <button name="import_order_states"
                             string="Import order states" type="object"
@@ -112,6 +114,11 @@
                                                    attrs="{'invisible': [('use_for_import', '=', False)], 'required': [('use_for_import', '=', True)]}"/>
                                         </tree>
                                     </field>
+                                </h3>
+                            </page>
+                            <page string="Carriers" groups="base.group_user">
+                                <h3>
+                                    <field name="carriers"/>
                                 </h3>
                             </page>
                         </notebook>
