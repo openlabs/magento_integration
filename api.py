@@ -73,3 +73,17 @@ class OrderConfig(API):
                     }
         """
         return self.call('sales_order.get_order_states', [])
+
+    def get_shipping_methods(self):
+        """
+        Get available shipping methods.
+
+        :return: List of dictionaries of all available shipping method.
+                 Example :
+                         [
+                            {'code': 'flatrate', 'label': 'Flat Rate'},
+                            {'code': 'tablerate', 'label': 'Best Way'},
+                            ...
+                         ]
+        """
+        return self.call('sales_order.shipping_methods', [])
