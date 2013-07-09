@@ -57,6 +57,7 @@ class TestBase(unittest.TestCase):
         store_obj = POOL.get('magento.website.store')
         store_view_obj = POOL.get('magento.store.store_view')
         shop_obj = POOL.get('sale.shop')
+        uom_obj = POOL.get('product.uom')
 
         # Create two instances
         self.instance_id1 = instance_obj.create(
@@ -76,18 +77,25 @@ class TestBase(unittest.TestCase):
             }, txn.context
         )
 
+        # Search product uom
+        self.uom_id, = uom_obj.search(txn.cursor, txn.user, [
+            ('name', '=', 'Unit(s)'),
+        ])
+
         # Create one website under each instance
         self.website_id1 = website_obj.create(txn.cursor, txn.user, {
             'name': 'A test website 1',
             'magento_id': 1,
             'code': 'test_code',
             'instance': self.instance_id1,
+            'default_product_uom': self.uom_id,
         })
         self.website_id2 = website_obj.create(txn.cursor, txn.user, {
             'name': 'A test website 2',
             'magento_id': 1,
             'code': 'test_code',
             'instance': self.instance_id2,
+            'default_product_uom': self.uom_id,
         })
 
         shop = shop_obj.search(txn.cursor, txn.user, [], context=txn.context)

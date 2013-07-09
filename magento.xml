@@ -179,10 +179,9 @@
                                 </h1>
                             </group>
                             <group>
-                                <label for="instance"/>
                                 <field name="instance"/>
-                                <label for="company"/>
                                 <field name="company"/>
+                                <field name="default_product_uom"/>
                             </group>
                         </group>
                         <notebook>
