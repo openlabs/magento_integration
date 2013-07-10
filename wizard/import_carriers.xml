@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_import_carriers" model="ir.ui.view">
+            <field name="name">magento.instance.import_carriers.form</field>
+            <field name="model">magento.instance.import_carriers</field>
+            <field name="arch" type="xml">
+                <form string="Import Carriers" version="7.0">
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will import all the
+                            carriers / shipping methods for this
+                            magento instance. You should then configure the
+                            import carriers / shipping methods to match the
+                            delivery carriers in OpenERP to allow seamless
+                            synchronisation of tracking information.
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="import_carriers" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_import_carriers" model="ir.actions.act_window">
+            <field name="name">Import Carriers</field>
+            <field name="res_model">magento.instance.import_carriers</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_import_carriers"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>

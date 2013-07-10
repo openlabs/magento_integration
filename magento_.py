@@ -44,6 +44,10 @@ class Instance(osv.Model):
         order_states=fields.one2many(
             'magento.order_state', 'instance', 'Order States',
         ),
+        carriers=fields.one2many(
+            'magento.instance.carrier', 'instance',
+            'Carriers / Shipping Methods'
+        ),
     )
 
     def default_company(self, cursor, user, context):

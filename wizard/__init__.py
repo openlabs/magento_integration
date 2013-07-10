@@ -12,3 +12,4 @@ import import_catalog
 import import_orders
 import export_orders
 import export_inventory
+import import_carriers
