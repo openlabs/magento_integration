@@ -118,7 +118,28 @@
                             </page>
                             <page string="Carriers" groups="base.group_user">
                                 <h3>
-                                    <field name="carriers"/>
+                                    <field name="carriers">
+                                        <form string="Carriers" version="7.0">
+                                            <group>
+                                                <group>
+                                                    <field name="code"/>
+                                                </group>
+                                                <group>
+                                                    <field name="title"/>
+                                                </group>
+                                                <group>
+                                                    <field name="carrier"/>
+                                                </group>
+                                                <group>
+                                                    <field name="instance"/>
+                                                </group>
+                                            </group>
+                                        </form>
+                                        <tree string="Carriers">
+                                            <field name="code"/>
+                                            <field name="title"/>
+                                        </tree>
+                                    </field>
                                 </h3>
                             </page>
                         </notebook>
