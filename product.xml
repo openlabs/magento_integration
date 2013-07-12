@@ -17,7 +17,42 @@
                             <label for="magento_product_type"/>
                             <h3><field name="magento_product_type"/></h3>
                         </group>
-                        <field name= "magento_ids"/>
+                        <group col="4">
+                            <separator colspan="2" string="Magento IDs"/>
+                            <separator colspan="2" string="Price Tiers"/>
+                            <newline/>
+                            <field name= "magento_ids" colspan="2" nolabel="1">
+                                <form string="Magento IDs" version="7.0">
+                                    <group>
+                                        <group>
+                                            <label for="magento_id"/>
+                                            <h3><field name="magento_id"/></h3>
+                                        </group>
+                                        <group>
+                                            <label for="website"/>
+                                            <h3><field name="website"/></h3>
+                                        </group>
+                                    </group>
+                                </form>
+                                <tree editable="bottom">
+                                    <field name="magento_id"/>
+                                    <field name="website"/>
+                                </tree>
+                            </field>
+                            <field name= "price_tiers" colspan="2" nolabel="1">
+                                <form string="Price Tiers" version="7.0">
+                                    <group>
+                                        <group>
+                                            <label for="quantity"/>
+                                            <h3><field name="quantity"/></h3>
+                                        </group>
+                                    </group>
+                                </form>
+                                <tree editable="bottom">
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
+                        </group>
                     </page>
                 </notebook>
             </field>
@@ -31,8 +66,25 @@
                 <xpath expr="//group[@name='parent']" position="after">
                     <notebook position="inside" colspan="4">
                         <page string="Magento" groups="base.group_user" >
-                          <field name= "magento_ids"/>
-                      </page>
+                            <field name= "magento_ids" colspan="2">
+                                <form string="Magento IDs" version="7.0">
+                                    <group>
+                                        <group>
+                                            <label for="magento_id"/>
+                                            <h3><field name="magento_id"/></h3>
+                                        </group>
+                                        <group>
+                                            <label for="instance"/>
+                                            <h3><field name="instance"/></h3>
+                                        </group>
+                                    </group>
+                                </form>
+                                <tree>
+                                    <field name="magento_id"/>
+                                    <field name="instance"/>
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
                 </xpath>
             </field>

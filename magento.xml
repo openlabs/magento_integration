@@ -199,7 +199,24 @@
                             </page>
                             <page string="Magento Products" groups="base.group_user">
                                 <h3>
-                                    <field name="magento_products"/>
+                                    <field name="magento_products">
+                                        <form string="Products" version="7.0">
+                                            <group>
+                                                <group>
+                                                    <label for="product"/>
+                                                    <h3><field name="product"/></h3>
+                                                </group>
+                                                <group>
+                                                    <label for="magento_id"/>
+                                                    <h3><field name="magento_id"/></h3>
+                                                </group>
+                                            </group>
+                                        </form>
+                                        <tree string="Products">
+                                            <field name="product"/>
+                                            <field name="magento_id"/>
+                                        </tree>
+                                    </field>
                                 </h3>
                             </page>
                         </notebook>
@@ -237,6 +254,10 @@
             <field eval="7" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Website Store" version="7.0" col="6">
+                    <header>
+                        <button name="%(action_magento_export_tier_prices)d"
+                                type='action' class="oe_highlight" string='Export Tier Prices'/>
+                    </header>
                     <sheet>
                         <group>
                             <group>
@@ -281,6 +302,21 @@
                                 <h3>
                                     <field name="store_views" readonly="1"/>
                                 </h3>
+                            </page>
+                            <page string="Price Tiers" groups="base.group_user">
+                                <field name="price_tiers">
+                                    <form string="Price Tier" version="7.0">
+                                        <group>
+                                            <group>
+                                                <label for="quantity"/>
+                                                <h3><field name="quantity"/></h3>
+                                            </group>
+                                        </group>
+                                    </form>
+                                    <tree string="Price Tiers" editable="bottom">
+                                        <field name="quantity"/>
+                                    </tree>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>
