@@ -10,12 +10,82 @@ This module allows synchronization of Magento with Open ERP. It
 supports Synchronization of Customers, Addresses, Product Categories, Products,
 Order Statuses, and Orders.
 
-To login to the ERP, see `Login Instructions`_.
+See `Installation`_ first, then to login to the ERP, see `Login Instructions`_.
+
+.. _installation:
+
+Installation
+------------
+
+**Step 1: Installation of Magento extension**
+
+1. After login to magento Admin Panel, go to
+
+System >> Magento Connect >> Magento Connect Manager
+
+    .. image:: _images/goto-magento-connect-manager.png
+       :width: 800
+       :align: center
+
+2. Key in your username and password, the same username and password you entered
+   while login to magento
+    
+    .. image:: _images/login-magento-connect-manager.png
+       :width: 800
+       :align: center
+
+3. Click on the second tab for settings and change preferred state to 'Beta'.
+   (As of this date the plug-in is beta). Save your settings 
+
+   .. image:: _images/set-to-beta.png
+      :width: 800
+      :align: center
+
+.. note::
+   Default state is ``Stable``, change it to ``Beta``.
+
+4. Go to first tab i.e., ``Extensions`` to install magento-connector,
+
+    .. image:: _images/magento-connect-manager.png
+       :width: 800
+       :align: center
+
+5. You need to paste the following extension key in the box to install:
+
+| **http://connect20.magentocommerce.com/community/Openlabs_OpenERPConnector**
+
+|
+
+    .. image:: _images/extension-key.png
+       :width: 800
+       :align: center
+
+6. Click Install, and wait for the module to be shown for installation 
+
+    .. image:: _images/loading.png
+       :width: 800
+       :align: center
+
+7. Install it by clicking ``Proceed``, refer below screenshot:
+
+    .. image:: _images/confirm-key.png
+       :width: 800
+       :align: center
+
+8. The terminal shows the module installed, like shown below:
+
+   .. image:: _images/terminal-refresh.png
+      :width: 800
+      :align: center
+
+9. Now go to bottom of the page to check the installed module, where
+   installed module is shown at the end of the list, see below:
+
+    .. image:: _images/module-installed.png
+       :width: 800
+       :align: center
 
 .. _Login Instructions:
-
-Login Instructions
-------------------
 
 Login to OpenERP
 ++++++++++++++++
@@ -30,10 +100,7 @@ information:
     :width: 1000
     :align: center
 
-Installation
-------------
-
-To install Magento Integration module, follow the below instructions:
+**Step 2: Installation of Magento Integration**
 
 1. The module should be placed under the addons folder as specified in the
    OpenERP configuration file.
