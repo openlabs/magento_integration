@@ -7,6 +7,7 @@
 '''
 import magento
 from openerp.osv import fields, osv
+import openerp.addons.decimal_precision as dp
 
 
 class Category(osv.Model):
@@ -217,6 +218,9 @@ class Product(osv.Model):
             'magento.website.product', 'product',
             string='Magento IDs', readonly=True,
         ),
+        price_tiers=fields.one2many(
+            'product.price_tier', 'product', string='Price Tiers'
+        ),
     )
 
     def find_or_create_using_magento_id(
@@ -406,4 +410,61 @@ class MagentoWebsiteProduct(osv.Model):
             'unique(magento_id, website)',
             'Each product in a website must be unique!'
         ),
+    ]
+
+
+class ProductPriceTier(osv.Model):
+    """Price Tiers for product
+
+    This model stores the price tiers to be used while sending
+    tier prices for a product from OpenERP to Magento.
+    """
+    _name = 'product.price_tier'
+    _description = 'Price Tiers for product'
+    _rec_name = 'quantity'
+
+    def get_price(self, cursor, user, ids, name, _, context):
+        """Calculate the price of the product for quantity set in record
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: Records IDs
+        :param name: Nameo of field
+        :param context: Application context
+        """
+        pricelist_obj = self.pool.get('product.pricelist')
+        store_obj = self.pool.get('magento.website.store')
+
+        res = {}
+
+        if not context.get('magento_store'):
+            return res
+
+        for tier in self.browse(cursor, user, ids, context=context):
+            store = store_obj.browse(
+                cursor, user, context['magento_store'], context=context
+            )
+            res[tier.id] = pricelist_obj.price_get(
+                cursor, user, [store.shop.pricelist_id.id], tier.product.id,
+                tier.quantity, context={
+                    'uom': store.website.default_product_uom.id
+                }
+            )[store.shop.pricelist_id.id]
+        return res
+
+    _columns = dict(
+        product=fields.many2one(
+            'product.product', 'Product', required=True,
+            readonly=True,
+        ),
+        quantity=fields.float(
+            'Quantity', digits_compute=dp.get_precision('Product UoS'),
+            required=True
+        ),
+        price=fields.function(get_price, type='float', string='Price'),
+    )
+
+    _sql_constraints = [
+        ('product_quantity_unique', 'unique(product, quantity)',
+         'Quantity in price tiers must be unique for a product'),
     ]

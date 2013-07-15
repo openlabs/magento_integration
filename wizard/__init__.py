@@ -12,4 +12,5 @@ import import_catalog
 import import_orders
 import export_orders
 import export_inventory
+import export_tier_prices
 import import_carriers

@@ -11,6 +11,7 @@ import time
 from openerp.osv import fields, osv
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from openerp.tools.translate import _
+import openerp.addons.decimal_precision as dp
 import magento
 
 from .api import OrderConfig
@@ -280,6 +281,9 @@ class WebsiteStore(osv.Model):
         store_views=fields.one2many(
             'magento.store.store_view', 'store', 'Store Views', readonly=True,
         ),
+        price_tiers=fields.one2many(
+            'magento.store.price_tier', 'store', 'Price Tiers'
+        ),
     )
 
     _sql_constraints = [(
@@ -317,6 +321,61 @@ class WebsiteStore(osv.Model):
                 'website': website_id,
             }, context=context
         )
+
+    def export_tier_prices_to_magento(
+        self, cursor, user, store, context
+    ):
+        """
+        Exports tier prices of products from openerp to magento for this store
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param store: Browse record of store
+        :param context: Application context
+        :return: List of products
+        """
+        pricelist_obj = self.pool.get('product.pricelist')
+
+        products = []
+        instance = store.website.instance
+        for magento_product in store.website.magento_products:
+            products.append(magento_product.product)
+
+            price_tiers = magento_product.product.price_tiers or \
+                store.price_tiers
+
+            price_data = []
+            for tier in price_tiers:
+                if hasattr(tier, 'product'):
+                    # The price tier comes from a product, then it has a
+                    # function field for price, we use it directly
+                    price = tier.price
+                else:
+                    # The price tier comes from the default tiers on store,
+                    # we donr have a product on tier, so we use the current
+                    # product in loop for computing the price for this tier
+                    price = pricelist_obj.price_get(
+                        cursor, user, [store.shop.pricelist_id.id],
+                        magento_product.product.id,
+                        tier.quantity, context={
+                            'uom': store.website.default_product_uom.id
+                        }
+                    )[store.shop.pricelist_id.id]
+
+                price_data.append({
+                    'qty': tier.quantity,
+                    'price': price,
+                })
+
+            # Update stock information to magento
+            with magento.ProductTierPrice(
+                instance.url, instance.api_user, instance.api_key
+            ) as tier_price_api:
+                tier_price_api.update(
+                    magento_product.magento_id, price_data
+                )
+
+        return products
 
 
 class WebsiteStoreView(osv.Model):
@@ -529,3 +588,31 @@ class WebsiteStoreView(osv.Model):
             ))
 
         return exported_sales
+
+
+class StorePriceTier(osv.Model):
+    """Price Tiers for store
+
+    This model stores the default price tiers to be used while sending
+    tier prices for a product from OpenERP to Magento.
+    The product also has a similar table like this. If there are no entries in
+    the table on product, then these tiers are used.
+    """
+    _name = 'magento.store.price_tier'
+    _description = 'Price Tiers for store'
+
+    _columns = dict(
+        store=fields.many2one(
+            'magento.website.store', 'Magento Store', required=True,
+            readonly=True,
+        ),
+        quantity=fields.float(
+            'Quantity', digits_compute=dp.get_precision('Product UoS'),
+            required=True
+        ),
+    )
+
+    _sql_constraints = [
+        ('store_quantity_unique', 'unique(store, quantity)',
+         'Quantity in price tiers must be unique for a store'),
+    ]

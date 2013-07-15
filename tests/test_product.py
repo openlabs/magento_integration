@@ -313,6 +313,57 @@ class TestProduct(TestBase):
                     txn.cursor, txn.user, website, context
                 )
 
+    def test_0090_tier_prices(self):
+        """Checks the function field on product price tiers
+        """
+        product_obj = POOL.get('product.product')
+        store_obj = POOL.get('magento.website.store')
+        category_obj = POOL.get('product.category')
+        pricelist_item_obj = POOL.get('product.pricelist.item')
+        product_price_tier = POOL.get('product.price_tier')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_website': self.website_id1,
+                'magento_store': self.store_id,
+            })
+            store = store_obj.browse(
+                txn.cursor, txn.user, self.store_id, context=context
+            )
+
+            category_data = load_json('categories', '17')
+
+            category_obj.create_using_magento_data(
+                txn.cursor, txn.user, category_data, context=context
+            )
+
+            product_data = load_json('products', '135')
+            product = product_obj.find_or_create_using_magento_data(
+                txn.cursor, txn.user, product_data, context
+            )
+
+            pricelist_item_obj.create(txn.cursor, txn.user, {
+                'name': 'Test line',
+                'price_version_id': store.shop.pricelist_id.version_id[0].id,
+                'product_id': product.id,
+                'min_quantity': 10,
+                'base': 1,
+                'price_surcharge': -5,
+            }, context=context)
+
+            tier_id = product_price_tier.create(txn.cursor, txn.user, {
+                'product': product.id,
+                'quantity': 10,
+            }, context)
+            tier = product_price_tier.browse(
+                txn.cursor, txn.user, tier_id, context
+            )
+
+            self.assertEqual(product.lst_price - 5, tier.price)
+
 
 def suite():
     _suite = unittest.TestSuite()
