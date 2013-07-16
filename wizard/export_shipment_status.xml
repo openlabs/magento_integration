@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_export_shipment_status" model="ir.ui.view">
+            <field name="name">magento.store.store_view.export_shipment_status.form</field>
+            <field name="model">magento.store.store_view.export_shipment_status</field>
+            <field name="arch" type="xml">
+                <form string="Export Shipment Status" version="7.0">
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will export shipment status for all the
+                            shipments related to this store view. 
+                            To export tracking information also for these
+                            shipments please check the checkbox for Export
+                            tracking Information on store_view.
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="export_shipment_status" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_export_shipment_status" model="ir.actions.act_window">
+            <field name="name">Export Shipment Status</field>
+            <field name="res_model">magento.store.store_view.export_shipment_status</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_export_shipment_status"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>

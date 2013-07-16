@@ -379,8 +379,10 @@
                     <header>
                          <button name="%(action_magento_import_orders)d"
                                  type='action' class="oe_highlight" string='Import Orders'/>
-                         <button name="%(action_magento_export_orders)d"
-                                 type='action' class="oe_highlight" string='Export Orders'/>
+                        <button name="%(action_magento_export_orders)d"
+                                type='action' class="oe_highlight" string='Export Orders'/>
+                        <button name="%(action_export_shipment_status)d"
+                                type='action' class="oe_highlight" string='Export Shipment Status'/>
                     </header>
                     <sheet>
                         <group>
@@ -417,12 +419,31 @@
                                 <h3><field name="company"/></h3>
                             </group>
                             <group>
+                                <label for="export_tracking_information"/>
+                                <h3><field name="export_tracking_information"/></h3>
+                            </group>
+                            <newline/>
+                            <p>
+                            Checking this will make sure that only the done
+                            shipments which have a carrier and tracking
+                            reference are exported. This will update carrier
+                            and tracking reference on magento for the exported
+                            shipments as well.
+                            </p>
+                            <newline/>
+                            <separator string="Last Export / Import Time"/>
+                            <newline/>
+                            <group>
                                 <label for="last_order_import_time"/>
                                 <h3><field name="last_order_import_time"/></h3>
                             </group>
                             <group>
                                 <label for="last_order_export_time"/>
                                 <h3><field name="last_order_export_time"/></h3>
+                            </group>
+                            <group>
+                                <label for="last_shipment_export_time"/>
+                                <h3><field name="last_shipment_export_time"/></h3>
                             </group>
                         </group>
                     </sheet>
@@ -459,6 +480,17 @@
             <field name="doall" eval="False"/>
             <field name="model" eval="'magento.store.store_view'"/>
             <field name="function" eval="'export_orders'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
+        <record model="ir.cron" id="ir_cron_export_shipment_status">
+            <field name="name">Export Shipment Status</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="model" eval="'magento.store.store_view'"/>
+            <field name="function" eval="'export_shipment_status'"/>
             <field name="args" eval="'()'"/>
         </record>
 
