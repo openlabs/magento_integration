@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_update_catalog" model="ir.ui.view">
+            <field name="name">magento.instance.update_catalog.form</field>
+            <field name="model">magento.instance.update_catalog</field>
+            <field name="arch" type="xml">
+                <form string="Update Catalog" version="7.0">
+                    <field name="id" invisible="1"/>
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will update all the product for this website
+                            with any details which have been updated on magento.
+                        </h3>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="update_catalog" />
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_update_catalog" model="ir.actions.act_window">
+            <field name="name">Update Catalog</field>
+            <field name="res_model">magento.instance.update_catalog</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_update_catalog"/>
+           <field name="target">new</field>
+       </record>
+
+    </data>
+</openerp>

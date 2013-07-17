@@ -23,6 +23,10 @@
                             <newline/>
                             <field name= "magento_ids" colspan="2" nolabel="1">
                                 <form string="Magento IDs" version="7.0">
+                                    <header>
+                                        <button name="update_product_from_magento" 
+                                            type='action' class="oe_highlight" string="Update from Magento"/>
+                                    </header>
                                     <group>
                                         <group>
                                             <label for="magento_id"/>
@@ -37,6 +41,8 @@
                                 <tree editable="bottom">
                                     <field name="magento_id"/>
                                     <field name="website"/>
+                                    <button name="update_product_from_magento" string="Update from Magento"
+                                        type="object" icon="STOCK_REFRESH" />
                                 </tree>
                             </field>
                             <field name= "price_tiers" colspan="2" nolabel="1">

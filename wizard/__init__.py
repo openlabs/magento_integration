@@ -9,6 +9,7 @@
 import test_connection
 import import_websites
 import import_catalog
+import update_catalog
 import import_orders
 import export_orders
 import export_inventory

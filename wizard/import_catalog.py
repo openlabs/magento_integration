@@ -100,7 +100,7 @@ class ImportCatalog(osv.TransientModel):
             for mag_product in mag_products:
                 products.append(
                     product_obj.find_or_create_using_magento_id(
-                        cursor, user, mag_product['product_id'], context
+                        cursor, user, mag_product['product_id'], context,
                     )
                 )
         return map(int, products)
