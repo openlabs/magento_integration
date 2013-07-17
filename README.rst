@@ -65,12 +65,14 @@ releases.
 Support
 -------
 
-If you have any questions or problems, please contact us at 
-`support@openlabs.co.in <mailto:support@openlabs.co.in>`_. You can also reach 
-us at +1 813 793 6736. Please do not email any of the Openlabs developers 
-directly with issues or questions as you're more likely to get an answer if
-you email us at the above address. You can also mail us your ideas and 
-suggestions about any changes.
+If you have any questions or problems, please report an
+`issue <https://github.com/openlabs/magento-integration/issues>`_.
+
+You can also reach us at `support@openlabs.co.in <mailto:support@openlabs.co.in>`_
+or talk to a human at +1 813 793 6736. Please do not email any of the Openlabs
+developers directly with issues or questions as you're more likely to get an
+answer if you create a github issue or email us at the above address.
+You can also mail us your ideas and suggestions about any changes.
 
 About Us
 --------
