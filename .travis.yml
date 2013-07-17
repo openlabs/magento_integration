@@ -7,9 +7,6 @@ services:
   - postgresql
 before_script:
   - psql -c 'create database myapp_test;' -U postgres
-  - cd ..
-  - ln -s magento-integration magento_integration
-  - cd magento-integration
 install:
 # OpenERP does not specify the version of pyparsing and the later
 # version only work with py3k
