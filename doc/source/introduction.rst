@@ -17,7 +17,7 @@ See `Installation`_ first, then to login to the ERP, see `Login Instructions`_.
 Installation
 ------------
 
-**Step 1: Installation of Magento extension**
+**Step 1: Installation of Magento core API extension**
 
 1. After login to magento Admin Panel, go to
 
@@ -85,6 +85,41 @@ System >> Magento Connect >> Magento Connect Manager
        :width: 800
        :align: center
 
+
+**Step 2: Installation of Magento Integration [OpenERP module]**
+
+**Downloading the module**
+
+1. The module source is available online and can be downloaded from
+   `here <https://github.com/openlabs/magento_integration>`_.
+
+2. The module can be downloaded as a `zip` or can be `cloned` by running
+
+    .. code-block:: sh
+
+        git clone https://github.com/openlabs/magento_integration.git
+
+    OR
+
+    .. code-block:: sh
+
+        git clone git@github.com:openlabs/magento_integration.git
+
+3. If the module is downloaded as a zip, extract the module which will
+   give a directory.
+
+4. Copy this directory to **addons** folder of openerp. [Advanced
+   users can update the addons path to add this module's parent folder in their
+   server config file.]
+
+5. From the module directory, use the setup.py script with the command:
+
+   .. code-block:: sh
+
+        python setup.py install
+
+**Installing the module in OpenERP database**
+
 .. _Login Instructions:
 
 Login to OpenERP
@@ -100,28 +135,23 @@ information:
     :width: 1000
     :align: center
 
-**Step 2: Installation of Magento Integration**
+1. Go to ``Settings``, click on *Update Modules List* shown under **Modules**
 
-1. The module should be placed under the addons folder as specified in the
-   OpenERP configuration file.
+2. Search for magento module in the search bar at top-right side of the page.
 
-2. Go to ``Settings``, click on *Update Modules List* shown under **Modules**
-
-3. Search for magento module in the search bar at top-right side of the page.
-
-4. Search returns the module named ``Magento Integration``, now click on
+3. Search returns the module named ``Magento Integration``, now click on
    the module to install, refer below screenshot:
 
     .. image:: _images/search_magento.png
         :width: 800
         :align: center
 
-5. A new window is now open to install this, click on ``Install``.
+4. A new window is now open to install this, click on ``Install``.
 
     .. image:: _images/Install_magento.png
        :width: 800
 
-6. On installing this a new window pop-ups asking ``Configure Accounting
+5. On installing this a new window pop-ups asking ``Configure Accounting
    Data`` details for your taxes and chart of accounts. Enter the details
    and ``Continue``.
 
@@ -129,4 +159,4 @@ information:
       :width: 800
       :align: center
 
-7. Now magento is installed. To configure it, refer :ref:`configuration`.
+6. Now magento is installed. To configure it, refer :ref:`configuration`.
