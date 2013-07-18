@@ -28,6 +28,7 @@ This will import the following:
         'wizard/test_connection.xml',
         'wizard/import_websites.xml',
         'wizard/import_catalog.xml',
+        'wizard/update_catalog.xml',
         'wizard/import_orders.xml',
         'wizard/export_orders.xml',
         'wizard/import_carriers.xml',

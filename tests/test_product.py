@@ -30,6 +30,20 @@ def mock_inventory_api(mock=None, data=None):
     return mock
 
 
+def mock_product_api(mock=None, data=None):
+    if mock is None:
+        mock = MagicMock(spec=magento.Product)
+
+    handle = MagicMock(spec=magento.Product)
+    handle.info.side_effect = lambda id: load_json('products', str(id))
+    if data is None:
+        handle.__enter__.return_value = handle
+    else:
+        handle.__enter__.return_value = data
+    mock.return_value = handle
+    return mock
+
+
 class TestProduct(TestBase):
     """Test the import of product
     """
@@ -363,6 +377,116 @@ class TestProduct(TestBase):
             )
 
             self.assertEqual(product.lst_price - 5, tier.price)
+
+    def test_0100_update_product_using_magento_data(self):
+        """Check if the product gets updated
+        """
+        product_obj = POOL.get('product.product')
+        category_obj = POOL.get('product.category')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_website': self.website_id1,
+                'magento_store': self.store_id,
+            })
+
+            category_data = load_json('categories', '17')
+
+            category_obj.create_using_magento_data(
+                txn.cursor, txn.user, category_data, context=context
+            )
+
+            product_data = load_json('products', '135')
+            product = product_obj.find_or_create_using_magento_data(
+                txn.cursor, txn.user, product_data, context
+            )
+            product_before_updation = product_obj.read(
+                txn.cursor, txn.user, product.id, [], context=txn.context
+            )
+
+            # Use a JSON file with product name, code and description changed
+            # and everything else same
+            product_data = load_json('products', '135001')
+            product = product_obj.update_from_magento_using_data(
+                txn.cursor, txn.user, product, product_data, context
+            )
+            product_after_updation = product_obj.read(
+                txn.cursor, txn.user, product.id, [], context=txn.context
+            )
+
+            self.assertEqual(
+                product_before_updation['id'], product_after_updation['id']
+            )
+            self.assertNotEqual(
+                product_before_updation['name'],
+                product_after_updation['name']
+            )
+            self.assertNotEqual(
+                product_before_updation['default_code'],
+                product_after_updation['default_code']
+            )
+            self.assertNotEqual(
+                product_before_updation['description'],
+                product_after_updation['description']
+            )
+
+    def test_0103_update_product_using_magento_id(self):
+        """Check if the product gets updated
+        """
+        product_obj = POOL.get('product.product')
+        category_obj = POOL.get('product.category')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_website': self.website_id1,
+                'magento_store': self.store_id,
+            })
+
+            category_data = load_json('categories', '17')
+
+            category_obj.create_using_magento_data(
+                txn.cursor, txn.user, category_data, context=context
+            )
+
+            product_data = load_json('products', '135001')
+            product = product_obj.find_or_create_using_magento_data(
+                txn.cursor, txn.user, product_data, context
+            )
+            product_before_updation = product_obj.read(
+                txn.cursor, txn.user, product.id, [], context=txn.context
+            )
+
+            # Use a JSON file with product name, code and description changed
+            # and everything else same
+            with patch('magento.Product', mock_product_api(), create=True):
+                product = product_obj.update_from_magento(
+                    txn.cursor, txn.user, product, context
+                )
+            product_after_updation = product_obj.read(
+                txn.cursor, txn.user, product.id, [], context=txn.context
+            )
+
+            self.assertEqual(
+                product_before_updation['id'], product_after_updation['id']
+            )
+            self.assertNotEqual(
+                product_before_updation['name'],
+                product_after_updation['name']
+            )
+            self.assertNotEqual(
+                product_before_updation['default_code'],
+                product_after_updation['default_code']
+            )
+            self.assertNotEqual(
+                product_before_updation['description'],
+                product_after_updation['description']
+            )
 
 
 def suite():

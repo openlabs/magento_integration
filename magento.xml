@@ -181,6 +181,8 @@
                     <header>
                         <button name="%(action_magento_import_catalog)d"
                                 type='action' class="oe_highlight" string='Import Catalog'/>
+                        <button name="%(action_magento_update_catalog)d"
+                                type='action' class="oe_highlight" string='Update Catalog'/>
                         <button name="%(action_magento_export_inventory)d"
                                 type='action' class="oe_highlight" string='Export Inventory'/>
                     </header>
@@ -222,6 +224,10 @@
                                 <h3>
                                     <field name="magento_products">
                                         <form string="Products" version="7.0">
+                                            <header>
+                                                <button name="update_product_from_magento" 
+                                                    type='action' class="oe_highlight" string="Update from Magento"/>
+                                            </header>
                                             <group>
                                                 <group>
                                                     <label for="product"/>
@@ -236,6 +242,8 @@
                                         <tree string="Products">
                                             <field name="product"/>
                                             <field name="magento_id"/>
+                                            <button name="update_product_from_magento" string="Update from Magento"
+                                                type="object" icon="STOCK_REFRESH" />
                                         </tree>
                                     </field>
                                 </h3>

@@ -323,6 +323,81 @@ class Product(osv.Model):
             cursor, user, record_ids[0], context=context
         ).product or None
 
+    def update_from_magento(
+        self, cursor, user, product, context=None
+    ):
+        """Update product using magento ID for that product
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product: Browse record of product to be updated
+        :param context: Application context
+        :returns: Browse record of product updated
+        """
+        website_obj = self.pool.get('magento.instance.website')
+        magento_product_obj = self.pool.get('magento.website.product')
+
+        website = website_obj.browse(
+            cursor, user, context['magento_website'], context=context
+        )
+        instance = website.instance
+
+        with magento.Product(
+            instance.url, instance.api_user, instance.api_key
+        ) as product_api:
+            magento_product_id, = magento_product_obj.search(
+                cursor, user, [
+                    ('product', '=', product.id),
+                    ('website', '=', website.id),
+                ], context=context
+            )
+            magento_product = magento_product_obj.browse(
+                cursor, user, magento_product_id, context=context
+            )
+            product_data = product_api.info(magento_product.magento_id)
+
+        return self.update_from_magento_using_data(
+            cursor, user, product, product_data, context
+        )
+
+    def extract_product_values_from_data(self, product_data):
+        """Extract product values from the magento data
+        These values are used for creation/updation of product
+
+        :param product_data: Product Data from magento
+        :return: Dictionary of values
+        """
+        return {
+            'name': product_data['name'],
+            'default_code': product_data['sku'],
+            'description': product_data['description'],
+            'list_price': float(
+                product_data.get('special_price') or
+                product_data.get('price') or 0.00
+            ),
+            'standard_price': float(product_data.get('price') or 0.00),
+        }
+
+    def update_from_magento_using_data(
+        self, cursor, user, product, product_data, context=None
+    ):
+        """Update product using magento data
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product: Browse record of product to be updated
+        :param product_data: Product Data from magento
+        :param context: Application context
+        :returns: Browse record of product updated
+        """
+        product_values = self.extract_product_values_from_data(product_data)
+        self.write(cursor, user, product.id, product_values, context=context)
+
+        # Rebrowse the record
+        product = self.browse(cursor, user, product.id, context=context)
+
+        return product
+
     def create_using_magento_data(
         self, cursor, user, product_data, context=None
     ):
@@ -350,27 +425,20 @@ class Product(osv.Model):
                 ('name', '=', 'Unclassified Magento Products')
             ], context=context)
 
-        product_values = {
-            'name': product_data['name'],
+        product_values = self.extract_product_values_from_data(product_data)
+        product_values.update({
             'categ_id': category_id,
-            'default_code': product_data['sku'],
             'uom_id':
                 website_obj.get_default_uom(
                     cursor, user, context
                 ).id,
-            'list_price': float(
-                product_data.get('special_price') or
-                product_data.get('price') or 0.00
-            ),
-            'standard_price': float(product_data.get('price') or 0.00),
-            'description': product_data['description'],
             'magento_product_type': product_data['type'],
             'procure_method': 'make_to_order',
             'magento_ids': [(0, 0, {
                 'magento_id': int(product_data['product_id']),
                 'website': context['magento_website'],
             })]
-        }
+        })
 
         if product_data['type'] == 'bundle':
             # Bundles are produced
@@ -411,6 +479,27 @@ class MagentoWebsiteProduct(osv.Model):
             'Each product in a website must be unique!'
         ),
     ]
+
+    def update_product_from_magento(self, cursor, user, ids, context):
+        """Update the product from magento with the details from magento
+        for the current website
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: Record IDs
+        :param context: Application context
+        """
+        product_obj = self.pool.get('product.product')
+
+        for record in self.browse(cursor, user, ids, context=context):
+            context.update({
+                'magento_website': record.website.id,
+            })
+            product_obj.update_from_magento(
+                cursor, user, record.product, context
+            )
+
+        return {}
 
 
 class ProductPriceTier(osv.Model):
