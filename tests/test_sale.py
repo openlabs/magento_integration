@@ -114,6 +114,38 @@ class TestSale(TestBase):
                     state.instance.id, context['magento_instance']
                 )
 
+    def test_0006_import_sale_order_states(self):
+        """
+        Test the import and creation of sale order states for an instance when
+        order state is unknown
+        """
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+            })
+
+            states_before_import = magento_order_state_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            states = magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, {'something': 'something'},
+                context=context
+            )
+            states_after_import = magento_order_state_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+
+            self.assertTrue(states_after_import > states_before_import)
+
+            for state in states:
+                self.assertEqual(
+                    state.instance.id, context['magento_instance']
+                )
+
     def test_0010_import_sale_order_with_products(self):
         """
         Tests import of sale order using magento data
