@@ -98,7 +98,7 @@ class MagentoOrderState(osv.Model):
                     'name': name,
                     'code': code,
                     'instance': context['magento_instance'],
-                    'openerp_state': default_order_states_map[code],
+                    'openerp_state': default_order_states_map.get(code),
                 }, context=context)
             )
 
