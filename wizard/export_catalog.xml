@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_magento_export_catalog" model="ir.ui.view">
+            <field name="name">magento.instance.website.export_catalog.form</field>
+            <field name="model">magento.instance.website.export_catalog</field>
+            <field name="arch" type="xml">
+                <form string="Export Catalog" version="7.0">
+                    <field name="id" invisible="1"/>
+                    <group>
+                        <h3 class="oe_grey">
+                            This wizard will export the products selected to the
+                            category selected to this current website.
+                        </h3>
+                    </group>
+                    <group>
+                        <label for="category"/>
+                        <h3><field name="category"/></h3>
+                        <label for="attribute_set"/>
+                        <h3><field name="attribute_set" context="{'active_id':active_id}"/></h3>
+                    </group>
+                    <group>
+                        <separator string="Select products to export"/>
+                        <field name="products" nolabel="1" colspan="4"/>
+                    </group>
+                    <footer>
+                        <button string="Continue" type="object"
+                            name="export_catalog" />
+                        or
+                        <button string="Close" special="cancel" class="oe_link"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_magento_export_catalog" model="ir.actions.act_window">
+            <field name="name">Export Catalog</field>
+            <field name="res_model">magento.instance.website.export_catalog</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+           <field name="view_id" ref="view_magento_export_catalog"/>
+            <field name="context">{'active_id':active_id}</field>
+       </record>
+
+    </data>
+</openerp>

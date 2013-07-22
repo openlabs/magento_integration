@@ -7,6 +7,7 @@
 '''
 import magento
 from openerp.osv import fields, osv
+from openerp.tools.translate import _
 import openerp.addons.decimal_precision as dp
 
 
@@ -447,6 +448,103 @@ class Product(osv.Model):
         product_id = self.create(cursor, user, product_values, context=context)
 
         return self.browse(cursor, user, product_id, context=context)
+
+    def get_product_values_for_export_to_magento(
+        self, product, categories, websites, context
+    ):
+        """Creates a dictionary of values which have to exported to magento for
+        creating a product
+
+        :param product: Browse record of product
+        :param categories: List of Browse record of categories
+        :param websites: List of Browse record of websites
+        :param context: Application context
+        """
+        return {
+            'categories': map(
+                lambda mag_categ: mag_categ.magento_id,
+                categories[0].magento_ids
+            ),
+            'websites': map(lambda website: website.magento_id, websites),
+            'name': product.name,
+            'description': product.description or product.name,
+            'short_description': product.description or product.name,
+            'status': '1',
+            'weight': product.weight_net,
+            'visibility': '4',
+            'price': product.lst_price,
+            'tax_class_id': '1',
+        }
+
+    def export_to_magento(self, cursor, user, product, category, context):
+        """Export the given `product` to the magento category corresponding to
+        the given `category` under the current website in context
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param product: Browserecord of product to be exported
+        :param category: Browserecord of category to which the product has
+                         to be exported
+        :param context: Application context
+        :return: Browserecord of product
+        """
+        website_obj = self.pool.get('magento.instance.website')
+        website_product_obj = self.pool.get('magento.website.product')
+
+        if not category.magento_ids:
+            raise osv.except_osv(
+                _('Invalid Category!'),
+                _('Category %s must have a magento category associated') %
+                category.complete_name,
+            )
+
+        if product.magento_ids:
+            raise osv.except_osv(
+                _('Invalid Product!'),
+                _('Product %s already has a magento product associated') %
+                product.name,
+            )
+
+        if not product.default_code:
+            raise osv.except_osv(
+                _('Invalid Product!'),
+                _('Product %s has a missing code.') %
+                product.name,
+            )
+
+        website = website_obj.browse(
+            cursor, user, context['magento_website'], context=context
+        )
+        instance = website.instance
+
+        with magento.Product(
+            instance.url, instance.api_user, instance.api_key
+        ) as product_api:
+            # We create only simple products on magento with the default
+            # attribute set
+            # TODO: We have to call the method from core API extension
+            # because the method for catalog create from core API does not seem
+            # to work. This should ideally be from core API rather than
+            # extension
+            magento_id = product_api.call(
+                'ol_catalog_product.create', [
+                    'simple',
+                    int(context['magento_attribute_set']),
+                    product.default_code,
+                    self.get_product_values_for_export_to_magento(
+                        product, [category], [website], context
+                    )
+                ]
+            )
+            website_product_obj.create(cursor, user, {
+                'magento_id': magento_id,
+                'website': context['magento_website'],
+                'product': product.id,
+            }, context=context)
+            self.write(cursor, user, product.id, {
+                'magento_product_type': 'simple'
+            }, context=context)
+        return product
 
 
 class MagentoWebsiteProduct(osv.Model):

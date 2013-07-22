@@ -35,6 +35,7 @@ This will import the following:
         'wizard/export_inventory.xml',
         'wizard/export_tier_prices.xml',
         'wizard/export_shipment_status.xml',
+        'wizard/export_catalog.xml',
         'product.xml',
         'magento.xml',
         'sale.xml',
