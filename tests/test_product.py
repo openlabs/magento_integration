@@ -488,6 +488,48 @@ class TestProduct(TestBase):
                 product_after_updation['description']
             )
 
+    def test_0110_export_catalog(self):
+        """
+        Check the export of product catalog to magento.
+        This method does not check the API calls.
+        """
+        product_obj = POOL.get('product.product')
+        category_obj = POOL.get('product.category')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_website': self.website_id1,
+                'magento_attribute_set': 1,
+            })
+
+            category_data = load_json('categories', '17')
+
+            category = category_obj.create_using_magento_data(
+                txn.cursor, txn.user, category_data, context=context
+            )
+
+            product_id = product_obj.create(
+                txn.cursor, txn.user, {
+                    'name': 'Test product',
+                    'default_code': 'code',
+                    'description': 'This is a product description',
+                    'list_price': 100,
+                }, context=context
+            )
+            product = product_obj.browse(
+                txn.cursor, txn.user, product_id, context=context
+            )
+
+            with patch(
+                'magento.Product', mock_product_api(), create=True
+            ):
+                product_obj.export_to_magento(
+                    txn.cursor, txn.user, product, category, context
+                )
+
 
 def suite():
     _suite = unittest.TestSuite()
