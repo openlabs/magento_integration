@@ -139,6 +139,13 @@ class InstanceWebsite(osv.Model):
             help="This is used to set UOM while creating products imported "
             "from magento",
         ),
+        magento_root_category_id=fields.integer(
+            'Magento Root Category ID', required=True,
+        )
+    )
+
+    _defaults = dict(
+        magento_root_category_id=lambda *a: 1,
     )
 
     _sql_constraints = [(

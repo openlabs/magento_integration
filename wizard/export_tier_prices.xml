@@ -23,7 +23,7 @@
         </record>
 
         <record id="action_magento_export_tier_prices" model="ir.actions.act_window">
-            <field name="name">Export Inventory</field>
+            <field name="name">Export Tier Prices</field>
             <field name="res_model">magento.store.export_tier_prices</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

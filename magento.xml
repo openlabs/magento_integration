@@ -214,6 +214,7 @@
                                 <field name="instance"/>
                                 <field name="company"/>
                                 <field name="default_product_uom"/>
+                                <field name="magento_root_category_id"/>
                             </group>
                         </group>
                         <notebook>

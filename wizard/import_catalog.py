@@ -31,26 +31,26 @@ class ImportCatalog(osv.TransientModel):
         website = website_obj.browse(
             cursor, user, context['active_id'], context
         )
-        instance = website.instance
 
-        self.import_category_tree(cursor, user, instance, context)
+        self.import_category_tree(cursor, user, website, context)
         product_ids = self.import_products(cursor, user, website, context)
 
         return self.open_products(
             cursor, user, ids, product_ids, context
         )
 
-    def import_category_tree(self, cursor, user, instance, context):
+    def import_category_tree(self, cursor, user, website, context):
         """
         Imports category tree
 
         :param cursor: Database cursor
         :param user: ID of current user
-        :param instance: Browse record of instance
+        :param website: Browse record of website
         :param context: Application context
         """
         category_obj = self.pool.get('product.category')
 
+        instance = website.instance
         context.update({
             'magento_instance': instance.id
         })
@@ -58,7 +58,7 @@ class ImportCatalog(osv.TransientModel):
         with Category(
             instance.url, instance.api_user, instance.api_key
         ) as category_api:
-            category_tree = category_api.tree()
+            category_tree = category_api.tree(website.magento_root_category_id)
 
             category_obj.create_tree_using_magento_data(
                 cursor, user, category_tree, context
