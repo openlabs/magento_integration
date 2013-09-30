@@ -414,6 +414,9 @@ class Sale(osv.Model):
         line_data = []
         for item in order_data['items']:
             if not item['parent_item_id']:
+
+                taxes = self.get_magento_taxes(cursor, user, item, context)
+
                 # If its a top level product, create it
                 values = {
                     'name': item['name'],
@@ -425,6 +428,7 @@ class Sale(osv.Model):
                     'product_uom_qty': float(item['qty_ordered']),
                     'magento_notes': item['product_options'],
                     'type': 'make_to_order',
+                    'tax_id': [(6, 0, taxes)],
                     'product_id':
                         product_obj.find_or_create_using_magento_id(
                             cursor, user, item['product_id'],
@@ -447,6 +451,29 @@ class Sale(osv.Model):
         )
 
         return line_data
+
+    def get_magento_taxes(self, cursor, user, item_data, context):
+        """Match the tax in openerp with the tax rate from magento
+        Use this tax on sale line
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param item_data: Item Data from magento
+        :param context: Application context
+        """
+        tax_obj = self.pool.get('account.tax')
+
+        # Magento does not return the name of tax
+        # First try matching with the percent
+        tax_ids = tax_obj.search(cursor, user, [
+            ('amount', '=', float(item_data['tax_percent']) / 100),
+            ('used_on_magento', '=', True)
+        ], context=context)
+
+        # FIXME This will fail in the case of bundle products as tax comes
+        # comes with the children and not with parent
+
+        return tax_ids
 
     def get_shipping_line_data_using_magento_data(
         self, cursor, user, order_data, context

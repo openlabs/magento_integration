@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_tax_form" model="ir.ui.view">
+            <field name="name">account.tax.form.inherit</field>
+            <field name="model">account.tax</field>
+            <field name="inherit_id" ref="account.view_tax_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form[@string='Account Tax']/notebook/page[@string='Tax Definition']" position="inside">
+                    <group string="Magento">
+                        <field name="used_on_magento"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</openerp>

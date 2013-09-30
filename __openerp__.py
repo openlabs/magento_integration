@@ -39,6 +39,7 @@ This will import the following:
         'product.xml',
         'magento.xml',
         'sale.xml',
+        'account.xml',
     ],
     'css': [],
     'images': [],

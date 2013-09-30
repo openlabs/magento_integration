@@ -446,6 +446,60 @@ class TestSale(TestBase):
             # Item lines + shipping line should be equal to lines on openerp
             self.assertEqual(len(order.order_line), 3)
 
+    def test_0039_import_sale_with_tax(self):
+        """
+        Tests import of sale order with tax
+        """
+        sale_obj = POOL.get('sale.order')
+        partner_obj = POOL.get('res.partner')
+        category_obj = POOL.get('product.category')
+        tax_obj = POOL.get('account.tax')
+        magento_order_state_obj = POOL.get('magento.order_state')
+
+        with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
+            self.setup_defaults(txn)
+            context = deepcopy(CONTEXT)
+            tax_obj.create(txn.cursor, txn.user, {
+                'name': 'VAT',
+                'amount': float('0.20'),
+                'used_on_magento': True
+            })
+            context.update({
+                'magento_instance': self.instance_id1,
+                'magento_store_view': self.store_view_id,
+                'magento_website': self.website_id1,
+            })
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, load_json('order-states', 'all'),
+                context=context
+            )
+
+            category_tree = load_json('categories', 'category_tree')
+            category_obj.create_tree_using_magento_data(
+                txn.cursor, txn.user, category_tree, context
+            )
+
+            order_data = load_json('orders', '100000005')
+
+            with patch('magento.Customer', mock_customer_api(), create=True):
+                partner_obj.find_or_create_using_magento_id(
+                    txn.cursor, txn.user, order_data['customer_id'], context
+                )
+
+            # Create sale order using magento data
+            with patch('magento.Product', mock_product_api(), create=True):
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            self.assertEqual(
+                order.amount_total, float(order_data['base_grand_total'])
+            )
+
+            # Item lines + shipping line should be equal to lines on openerp
+            self.assertEqual(len(order.order_line), 3)
+
     def test_0040_import_carriers(self):
         """
         Test If all carriers are being imported from magento
