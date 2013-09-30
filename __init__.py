@@ -11,6 +11,7 @@ import country
 import product
 import partner
 import bom
+import account
 import sale
 import currency
 
