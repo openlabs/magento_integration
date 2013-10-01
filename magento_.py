@@ -623,7 +623,12 @@ class WebsiteStoreView(osv.Model):
 
         for store_view in self.browse(cursor, user, ids, context):
             # Set the instance in context
-            context['magento_instance'] = store_view.instance.id
+            if context:
+                context['magento_instance'] = store_view.instance.id
+            else:
+                context = {
+                    'magento_instance': store_view.instance.id
+                }
 
             self.export_shipment_status_to_magento(
                 cursor, user, store_view, context
