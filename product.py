@@ -434,7 +434,9 @@ class Product(osv.Model):
                     cursor, user, context
                 ).id,
             'magento_product_type': product_data['type'],
-            'procure_method': 'make_to_order',
+            'procure_method': product_values.get(
+                'procure_method', 'make_to_order'
+            ),
             'magento_ids': [(0, 0, {
                 'magento_id': int(product_data['product_id']),
                 'website': context['magento_website'],
