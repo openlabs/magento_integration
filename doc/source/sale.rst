@@ -129,3 +129,57 @@ This will export order's status to magento for this store view
 
 .. note::
    This feature is currenctly available for Cancelled Orders
+
+
+Handle Taxes When Importing Orders From Magento
+------------------------------------------------
+
+Taxes are matched on openerp and magento using their rates. But there can be
+multiple taxes with same rates and hence lead to ambiguity.
+So a field is added to taxes in openerp which allows the user to tell the system
+that a tax can be used for rate matching with a tax on magento.
+
+See screenshot below:
+
+.. _openerp-tax:
+.. image:: _images/openerp_tax.png
+   :width: 800
+   :align: center
+
+The corresponding tax on magento can be seen in screenshot below:
+
+.. _magento-tax:
+.. image:: _images/magento_tax.png
+   :width: 800
+   :align: center
+
+Now, when an order placed on magento with `Magento Tax`_ is imported to openerp,
+the `OpenERP Tax`_ will be applied on the corresponding sale line in openerp. If
+no matching tax is found, then no tax is applied and a user can apply taxes if
+needed, later.
+
+.. note::
+   This feature works only for simple products as of now.
+
+
+Handle Taxes On Shipping
+------------------------
+
+Handling of taxes on shipping need an extra bit of configuration to be done.
+Tax on shipping has to be set as tax included in price because magento
+does not send the tax on shipping as a rate and calculating the rate from
+the amount almost always leads to mismatch of order totals due to rounding
+issues. Hence, the tax on shipping is set to be included in price to make
+sure order totals match and tax calculation done by openerp is assumed to
+be as close as possible to the tax calculation done by magento.
+See screenshot below:
+
+.. image:: _images/openerp-shipping-tax.png
+   :width: 800
+   :align: center
+
+Here details need to be set as highlighted in screenshot.
+
+.. note::
+   Make sure that only one tax has been set to be applied on magento
+   shipping.
