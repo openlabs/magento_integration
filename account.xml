@@ -10,6 +10,8 @@
                 <xpath expr="//form[@string='Account Tax']/notebook/page[@string='Tax Definition']" position="inside">
                     <group string="Magento">
                         <field name="used_on_magento"/>
+                        <field name="apply_on_magento_shipping"
+                               on_change="onchange_apply_on_magento_shipping(apply_on_magento_shipping, context)" />
                     </group>
                 </xpath>
             </field>
