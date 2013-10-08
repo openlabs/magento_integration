@@ -475,6 +475,26 @@ class Sale(osv.Model):
 
         return tax_ids
 
+    def get_magento_shipping_tax(self, cursor, user, order_data, context):
+        """Match the tax in openerp which has been selected to be applied on
+        magento shipping.
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param order_data: Order Data from magento
+        :param context: Application context
+        """
+        tax_obj = self.pool.get('account.tax')
+
+        # Magento does not return the name of tax or rate
+        # We can match only using the field set on tax in openerp itself
+        tax_ids = tax_obj.search(cursor, user, [
+            ('apply_on_magento_shipping', '=', True),
+            ('used_on_magento', '=', True)
+        ], context=context)
+
+        return tax_ids
+
     def get_shipping_line_data_using_magento_data(
         self, cursor, user, order_data, context
     ):
@@ -488,13 +508,17 @@ class Sale(osv.Model):
         """
         website_obj = self.pool.get('magento.instance.website')
 
+        taxes = self.get_magento_shipping_tax(
+            cursor, user, order_data, context
+        )
         return (0, 0, {
             'name': 'Magento Shipping',
-            'price_unit': float(order_data.get('shipping_amount', 0.00)),
+            'price_unit': float(order_data.get('shipping_incl_tax', 0.00)),
             'product_uom':
                 website_obj.get_default_uom(
                     cursor, user, context
                 ).id,
+            'tax_id': [(6, 0, taxes)],
             'magento_notes': ' - '.join([
                 order_data['shipping_method'],
                 order_data['shipping_description']
