@@ -376,7 +376,6 @@ class Product(osv.Model):
                 product_data.get('special_price') or
                 product_data.get('price') or 0.00
             ),
-            'standard_price': float(product_data.get('price') or 0.00),
         }
 
     def update_from_magento_using_data(
