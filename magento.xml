@@ -478,9 +478,9 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
+            <field name="doall" eval="True"/>
             <field name="model" eval="'magento.store.store_view'"/>
-            <field name="function" eval="'get_orders'"/>
+            <field name="function" eval="'import_orders'"/>
             <field name="args" eval="'()'"/>
         </record>
         <record model="ir.cron" id="ir_cron_export_sale_orders">
@@ -488,7 +488,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
+            <field name="doall" eval="True"/>
             <field name="model" eval="'magento.store.store_view'"/>
             <field name="function" eval="'export_orders'"/>
             <field name="args" eval="'()'"/>
@@ -499,7 +499,7 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>
-            <field name="doall" eval="False"/>
+            <field name="doall" eval="True"/>
             <field name="model" eval="'magento.store.store_view'"/>
             <field name="function" eval="'export_shipment_status'"/>
             <field name="args" eval="'()'"/>
