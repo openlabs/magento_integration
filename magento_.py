@@ -518,7 +518,11 @@ class WebsiteStoreView(osv.Model):
         magento_state_obj = self.pool.get('magento.order_state')
 
         instance = store_view.instance
-        new_context = deepcopy(context)
+        if context:
+            new_context = deepcopy(context)
+        else:
+            new_context = {}
+
         new_context.update({
             'magento_instance': instance.id,
             'magento_website': store_view.website.id,
