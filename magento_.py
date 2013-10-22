@@ -207,6 +207,37 @@ class InstanceWebsite(osv.Model):
             }, context=context
         )
 
+    def import_catalog(self, cursor, user, ids=None, context=None):
+        """
+        Import catalog from magento on cron
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: list of store_view ids
+        :param context: dictionary of application context data
+        """
+        import_catalog_wiz_obj = self.pool.get(
+            'magento.instance.import_catalog'
+        )
+
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for website in self.browse(cursor, user, ids, context):
+            if not website.instance.active:
+                continue
+
+            if context:
+                context['active_id'] = website.id
+            else:
+                context = {'active_id': website.id}
+            import_catalog_wiz = import_catalog_wiz_obj.create(
+                cursor, user, {}, context=context
+            )
+            import_catalog_wiz_obj.import_catalog(
+                cursor, user, [import_catalog_wiz], context
+            )
+
     def export_inventory(self, cursor, user, ids=None, context=None):
         """
         Exports inventory stock information to magento
