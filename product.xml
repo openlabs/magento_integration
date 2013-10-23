@@ -96,6 +96,17 @@
             </field>
         </record>
 
+        <record model="ir.cron" id="ir_cron_import_catalog">
+            <field name="name">Import Catalog</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="model" eval="'magento.instance.website'"/>
+            <field name="function" eval="'import_catalog'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
         <record model="ir.cron" id="ir_cron_export_inventory">
             <field name="name">Export Inventory</field>
             <field name="interval_number">1</field>
