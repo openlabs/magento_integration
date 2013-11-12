@@ -19,7 +19,7 @@ class Category(osv.Model):
     _columns = dict(
         magento_ids=fields.one2many(
             'magento.instance.product_category', 'category',
-            string='Magento IDs', readonly=True,
+            string='Magento IDs',
         ),
     )
 
@@ -180,7 +180,7 @@ class MagentoInstanceCategory(osv.Model):
 
     _columns = dict(
         magento_id=fields.integer(
-            'Magento ID', readonly=True, required=True, select=True,
+            'Magento ID', required=True, select=True,
         ),
         instance=fields.many2one(
             'magento.instance', 'Magento Instance', readonly=True,
@@ -217,7 +217,7 @@ class Product(osv.Model):
         ], 'Magento Product type', readonly=True),
         magento_ids=fields.one2many(
             'magento.website.product', 'product',
-            string='Magento IDs', readonly=True,
+            string='Magento IDs',
         ),
         price_tiers=fields.one2many(
             'product.price_tier', 'product', string='Price Tiers'
@@ -559,7 +559,7 @@ class MagentoWebsiteProduct(osv.Model):
 
     _columns = dict(
         magento_id=fields.integer(
-            'Magento ID', readonly=True, required=True, select=True,
+            'Magento ID', required=True, select=True,
         ),
         website=fields.many2one(
             'magento.instance.website', 'Magento Website', readonly=True,
