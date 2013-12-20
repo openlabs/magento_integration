@@ -505,5 +505,17 @@
             <field name="args" eval="'()'"/>
         </record>
 
+        <record model="ir.cron" id="ir_cron_update_catalog">
+            <field name="name">Update Catalog</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="True"/>
+            <field name="active" eval="False"/>
+            <field name="model" eval="'product.product'"/>
+            <field name="function" eval="'update_catalog'"/>
+            <field name="args" eval="'()'"/>
+        </record>
+
     </data>
 </openerp>

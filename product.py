@@ -324,6 +324,23 @@ class Product(osv.Model):
             cursor, user, record_ids[0], context=context
         ).product or None
 
+    def update_catalog(self, cursor, user, ids=None, context=None):
+        """
+        Updates catalog from magento to openerp
+
+        :param cursor: Database cursor
+        :param user: ID of current user
+        :param ids: List of ids of website
+        :param context: Application context
+        """
+        if not ids:
+            ids = self.search(cursor, user, [], context)
+
+        for product in self.browse(cursor, user, ids, context):
+            self.update_from_magento(
+                cursor, user, product, context
+            )
+
     def update_from_magento(
         self, cursor, user, product, context=None
     ):
