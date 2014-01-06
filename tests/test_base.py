@@ -7,9 +7,9 @@
 """
 import os
 import json
-
 import unittest
 
+import settings
 from itsbroken.testing import POOL, install_module
 
 
@@ -63,9 +63,9 @@ class TestBase(unittest.TestCase):
         self.instance_id1 = instance_obj.create(
             txn.cursor, txn.user, {
                 'name': 'Test Instance 1',
-                'url': 'some test url 1',
-                'api_user': 'admin',
-                'api_key': 'testkey',
+                'url': settings.URL,
+                'api_user': settings.API_USER,
+                'api_key': settings.API_PASSWORD,
             }, txn.context
         )
         self.instance_id2 = instance_obj.create(

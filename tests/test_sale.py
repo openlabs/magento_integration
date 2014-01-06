@@ -20,6 +20,8 @@ from itsbroken.transaction import Transaction
 from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
 
 from test_base import TestBase, load_json
+from api import OrderConfig
+import settings
 
 
 def mock_product_api(mock=None, data=None):
@@ -99,10 +101,17 @@ class TestSale(TestBase):
             states_before_import = magento_order_state_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
             states = magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
+                txn.cursor, txn.user, order_states,
                 context=context
             )
+
             states_after_import = magento_order_state_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
@@ -154,6 +163,7 @@ class TestSale(TestBase):
         partner_obj = POOL.get('res.partner')
         category_obj = POOL.get('product.category')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -164,36 +174,70 @@ class TestSale(TestBase):
                 'magento_website': self.website_id1,
             })
 
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
+                txn.cursor, txn.user, order_states,
                 context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            orders_before_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
 
-            order_data = load_json('orders', '100000001')
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                        'magento.Customer', mock_customer_api(), create=True):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'], context
+                    )
+
+                # Create sale order using magento data
+                with patch(
+                        'magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
-
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
 
             self.assertEqual(order.state, 'manual')
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 1)
+            orders_after_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            self.assertTrue(orders_after_import > orders_before_import)
 
             # Item lines + shipping line should be equal to lines on openerp
             self.assertEqual(
@@ -212,6 +256,7 @@ class TestSale(TestBase):
         partner_obj = POOL.get('res.partner')
         category_obj = POOL.get('product.category')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -222,39 +267,74 @@ class TestSale(TestBase):
                 'magento_website': self.website_id1,
             })
 
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
+                txn.cursor, txn.user, order_states,
                 context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            orders_before_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
 
-            order_data = load_json('orders', '100000001')
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                        'magento.Customer', mock_customer_api(), create=True):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
+
+                # Create sale order using magento increment_id
+                with nested(
+                    patch('magento.Product', mock_product_api(), create=True),
+                    patch('magento.Order', mock_order_api(), create=True),
+                ):
+                    order = sale_obj.find_or_create_using_magento_increment_id(
+                        txn.cursor, txn.user, order_data['increment_id'],
+                        context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+
                 partner_obj.find_or_create_using_magento_id(
-                    txn.cursor, txn.user, order_data['customer_id'], context
+                    txn.cursor, txn.user, order_data['customer_id'],
+                    context
                 )
-
-            # Create sale order using magento increment_id
-            with nested(
-                patch('magento.Product', mock_product_api(), create=True),
-                patch('magento.Order', mock_order_api(), create=True),
-            ):
                 order = sale_obj.find_or_create_using_magento_increment_id(
                     txn.cursor, txn.user, order_data['increment_id'],
                     context=context
                 )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-
-            self.assertEqual(len(orders), 1)
+            orders_after_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            self.assertTrue(orders_after_import > orders_before_import)
 
             # Item lines + shipping line should be equal to lines on openerp
             self.assertEqual(
@@ -273,38 +353,81 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         category_obj = POOL.get('product.category')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
             context = deepcopy(CONTEXT)
+            lines = []
             context.update({
                 'magento_instance': self.instance_id1,
                 'magento_store_view': self.store_view_id,
                 'magento_website': self.website_id1,
             })
 
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
+                txn.cursor, txn.user, order_states,
                 context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            orders_before_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
 
-            order_data = load_json('orders', '300000001')
+            if settings.MOCK:
+                order_data = load_json('orders', '300000001')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        if filter(
+                            lambda item: item['product_type'] == 'bundle',
+                            order['items']
+                        ):
+                            order_data = order
+
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
-
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
@@ -312,24 +435,51 @@ class TestSale(TestBase):
             self.assertEqual(order.state, 'manual')
             self.assertTrue('bundle' in order.order_line[0].magento_notes)
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 1)
+            orders_after_import = sale_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+            self.assertTrue(orders_after_import > orders_before_import)
+
+            for item in order_data['items']:
+                if not item['parent_item_id']:
+                    lines.append(item)
+
+                # If the product is a child product of a bundle product, do not
+                # create a separate line for this.
+                if 'bundle_option' in item['product_options'] and \
+                        item['parent_item_id']:
+                    continue
 
             # Item lines + shipping line should be equal to lines on openerp
-            self.assertEqual(len(order.order_line), 2)
+            self.assertEqual(len(order.order_line), len(lines) + 1)
 
             self.assertEqual(
                 order.amount_total, float(order_data['base_grand_total'])
             )
 
+            if settings.MOCK:
+                product_data = load_json('products', '158')
+            else:
+                with magento.Product(*settings.ARGS) as product_api:
+                    product_list = product_api.list()
+                    for product in product_list:
+                        if product['type'] == 'simple':
+                            product_data = product_api.info(
+                                product=product['product_id'],
+                            )
+
             # There should be a BoM for the bundle product
             product = product_obj.find_or_create_using_magento_id(
-                txn.cursor, txn.user, 158, context
+                txn.cursor, txn.user, product_data['product_id'], context
             )
-            self.assertTrue(len(product.bom_ids), 1)
-            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
+            self.assertTrue(product.bom_ids)
+            self.assertEqual(
+                len(product.bom_ids[0].bom_lines), len(order.order_line)
+            )
 
-            self.assertEqual(len(order.picking_ids[0].move_lines), 2)
+            self.assertEqual(
+                len(order.picking_ids[0].move_lines), len(order.order_line)
+            )
 
     def test_0033_import_sale_order_with_bundle_product_check_duplicate(self):
         """
@@ -341,6 +491,7 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         category_obj = POOL.get('product.category')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -351,50 +502,124 @@ class TestSale(TestBase):
                 'magento_website': self.website_id1,
             })
 
-            magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, order_states, context=context
+            )
+
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            order_data = load_json('orders', '300000001')
+            if settings.MOCK:
+                order_data = load_json('orders', '300000001')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        if filter(
+                            lambda item: item['product_type'] == 'bundle',
+                            order['items']
+                        ):
+                            order_data = order
+
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
-                sale_obj.find_or_create_using_magento_data(
+                # Create sale order using magento data
+                order = sale_obj.find_or_create_using_magento_data(
+                    txn.cursor, txn.user, order_data, context=context
+                )
+
+            if settings.MOCK:
+                product_data = load_json('products', '158')
+            else:
+                with magento.Product(*settings.ARGS) as product_api:
+                    product_list = product_api.list()
+                    for product in product_list:
+                        if product['type'] == 'bundle':
+                            product_data = product_api.info(
+                                product=product['product_id'],
+                            )
+                            break
+
+            # There should be a BoM for the bundle product
+            product = product_obj.find_or_create_using_magento_id(
+                txn.cursor, txn.user, product_data['product_id'], context
+            )
+            self.assertTrue(product.bom_ids)
+            self.assertEqual(
+                len(product.bom_ids[0].bom_lines),
+                len(order.order_line)
+            )
+
+            if settings.MOCK:
+                order_data = load_json('orders', '300000001-a')
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        for item in order['items']:
+                            if item['product_type'] == 'bundle':
+                                order_data = order
+                                break
+
+                order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
 
             # There should be a BoM for the bundle product
             product = product_obj.find_or_create_using_magento_id(
-                txn.cursor, txn.user, 158, context
+                txn.cursor, txn.user, product_data['product_id'], context
             )
-            self.assertTrue(len(product.bom_ids), 1)
-            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
-
-            order_data = load_json('orders', '300000001-a')
-
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
-                sale_obj.find_or_create_using_magento_data(
-                    txn.cursor, txn.user, order_data, context=context
-                )
-
-            # There should be a BoM for the bundle product
-            product = product_obj.find_or_create_using_magento_id(
-                txn.cursor, txn.user, 158, context
+            self.assertTrue(product.bom_ids)
+            self.assertTrue(
+                len(product.bom_ids[0].bom_lines), len(order.order_line)
             )
-            self.assertTrue(len(product.bom_ids), 1)
-            self.assertTrue(len(product.bom_ids[0].bom_lines), 2)
 
     def test_0036_import_sale_with_bundle_plus_child_separate(self):
         """
@@ -406,35 +631,78 @@ class TestSale(TestBase):
         partner_obj = POOL.get('res.partner')
         category_obj = POOL.get('product.category')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
             context = deepcopy(CONTEXT)
+            lines = []
             context.update({
                 'magento_instance': self.instance_id1,
                 'magento_store_view': self.store_view_id,
                 'magento_website': self.website_id1,
             })
 
-            magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, order_states, context=context
+            )
+
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            order_data = load_json('orders', '100000004')
+            if settings.MOCK:
+                order_data = load_json('orders', '100000004')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        if filter(
+                            lambda item: item['product_type'] == 'bundle',
+                            order['items']
+                        ):
+                            order_data = order
+
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
@@ -443,8 +711,20 @@ class TestSale(TestBase):
                 order.amount_total, float(order_data['base_grand_total'])
             )
 
+            for item in order_data['items']:
+                if not item['parent_item_id']:
+                    lines.append(item)
+
+                # If the product is a child product of a bundle product, do not
+                # create a separate line for this.
+                if 'bundle_option' in item['product_options'] and \
+                        item['parent_item_id']:
+                    continue
+
             # Item lines + shipping line should be equal to lines on openerp
-            self.assertEqual(len(order.order_line), 3)
+            self.assertEqual(
+                len(order.order_line), len(lines) + 1
+            )
 
     def test_0039_import_sale_with_tax(self):
         """
@@ -455,6 +735,7 @@ class TestSale(TestBase):
         category_obj = POOL.get('product.category')
         tax_obj = POOL.get('account.tax')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -470,25 +751,61 @@ class TestSale(TestBase):
                 'magento_website': self.website_id1,
             })
 
-            magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, order_states, context=context
+            )
+
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            order_data = load_json('orders', '100000005')
+            if settings.MOCK:
+                order_data = load_json('orders', '100000005')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                        'magento.Customer', mock_customer_api(), create=True):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        if order.get('tax_amount'):
+                            order_data = order
+                            break
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
@@ -498,7 +815,9 @@ class TestSale(TestBase):
             )
 
             # Item lines + shipping line should be equal to lines on openerp
-            self.assertEqual(len(order.order_line), 3)
+            self.assertEqual(
+                len(order.order_line), len(order_data['items']) + 1
+            )
 
     def test_00395_import_sale_with_shipping_tax(self):
         """
@@ -509,6 +828,7 @@ class TestSale(TestBase):
         category_obj = POOL.get('product.category')
         tax_obj = POOL.get('account.tax')
         magento_order_state_obj = POOL.get('magento.order_state')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -526,25 +846,62 @@ class TestSale(TestBase):
                 'magento_website': self.website_id1,
             })
 
-            magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
+
+            magento_order_state_obj.create_all_using_magento_data(
+                txn.cursor, txn.user, order_states, context=context
+            )
+
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            order_data = load_json('orders', '100000057')
+            if settings.MOCK:
+                order_data = load_json('orders', '100000057')
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'], context
+                    )
+
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        if order.get('shipping_amount'):
+                            order_data = order
+                            break
                 partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
@@ -554,7 +911,9 @@ class TestSale(TestBase):
             )
 
             # Item lines + shipping line should be equal to lines on openerp
-            self.assertEqual(len(order.order_line), 2)
+            self.assertEqual(
+                len(order.order_line), len(order_data['items']) + 1
+            )
 
     def test_0040_import_carriers(self):
         """
@@ -573,10 +932,15 @@ class TestSale(TestBase):
             carriers_before_import = magento_carrier_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
+
+            if settings.MOCK:
+                mag_carriers = load_json('carriers', 'shipping_methods')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    mag_carriers = order_config_api.get_shipping_methods()
+
             carriers = magento_carrier_obj.create_all_using_magento_data(
-                txn.cursor, txn.user,
-                load_json('carriers', 'shipping_methods'),
-                context=context
+                txn.cursor, txn.user, mag_carriers, context=context
             )
             carriers_after_import = magento_carrier_obj.search(
                 txn.cursor, txn.user, [], context=context
@@ -588,6 +952,7 @@ class TestSale(TestBase):
                     carrier.instance.id, context['magento_instance']
                 )
 
+    @unittest.skipIf(not settings.MOCK, "requries mock settings")
     def test_0050_export_shipment(self):
         """
         Tests if shipments status is being exported for all the shipments
@@ -602,6 +967,7 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         magento_carrier_obj = POOL.get('magento.instance.carrier')
         picking_obj = POOL.get('stock.picking')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -613,39 +979,70 @@ class TestSale(TestBase):
             })
 
             store_view = store_view_obj.browse(
-                txn.cursor, txn.user, self.store_view_id, context=context
+                txn.cursor, txn.user, self.store_view_id, txn.context
             )
+
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
 
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+                txn.cursor, txn.user, order_states, context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
+                mag_carriers = load_json('carriers', 'shipping_methods')
 
-            order_data = load_json('orders', '100000001')
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner = partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    mag_carriers = order_config_api.get_shipping_methods()
+
                 partner = partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
 
             magento_carrier_obj.create_all_using_magento_data(
-                txn.cursor, txn.user,
-                load_json('carriers', 'shipping_methods'),
-                context=context
+                txn.cursor, txn.user, mag_carriers, context=context
             )
 
             product_id = product_obj.search(
@@ -690,8 +1087,14 @@ class TestSale(TestBase):
             for picking in pickings:
                 self.assertFalse(picking.magento_increment_id)
 
-            with patch('magento.Shipment', mock_shipment_api(), create=True):
+            if settings.MOCK:
 
+                with patch(
+                        'magento.Shipment', mock_shipment_api(), create=True):
+                    store_view_obj.export_shipment_status_to_magento(
+                        txn.cursor, txn.user, store_view, context=context
+                    )
+            else:
                 store_view_obj.export_shipment_status_to_magento(
                     txn.cursor, txn.user, store_view, context=context
                 )
@@ -704,6 +1107,7 @@ class TestSale(TestBase):
             for picking in pickings:
                 self.assertTrue(picking.magento_increment_id)
 
+    @unittest.skipIf(not settings.MOCK, "requries mock settings")
     def test_0060_export_shipment_status_with_tracking_info(self):
         """
         Tests if Tracking information is being updated for shipments
@@ -717,6 +1121,7 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         magento_carrier_obj = POOL.get('magento.instance.carrier')
         picking_obj = POOL.get('stock.picking')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -728,39 +1133,77 @@ class TestSale(TestBase):
             })
 
             store_view = store_view_obj.browse(
-                txn.cursor, txn.user, self.store_view_id, context=context
+                txn.cursor, txn.user, self.store_view_id, txn.context
             )
+
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
 
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+                txn.cursor, txn.user, order_states, context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
+                mag_carriers = load_json('carriers', 'shipping_methods')
 
-            order_data = load_json('orders', '100000001')
+                with patch(
+                    'magento.Customer', mock_customer_api(), create=True
+                ):
+                    partner = partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    for order in orders:
+                        for item in order['items']:
+                            if item['product_type'] == 'bundle':
+                                order_data = order
+                                break
+
                 partner = partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    mag_carriers = order_config_api.get_shipping_methods()
 
             magento_carrier_obj.create_all_using_magento_data(
-                txn.cursor, txn.user,
-                load_json('carriers', 'shipping_methods'),
-                context=context
+                txn.cursor, txn.user, mag_carriers, context=context
             )
 
             product_id = product_obj.search(
@@ -811,6 +1254,7 @@ class TestSale(TestBase):
                     True
                 )
 
+    @unittest.skipIf(not settings.MOCK, "requries mock settings")
     def test_0070_export_shipment_status_with_last_export_date_case1(self):
         """
         Tests that if last shipment export time is there then shipment status
@@ -826,6 +1270,7 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         magento_carrier_obj = POOL.get('magento.instance.carrier')
         picking_obj = POOL.get('stock.picking')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -837,39 +1282,68 @@ class TestSale(TestBase):
             })
 
             store_view = store_view_obj.browse(
-                txn.cursor, txn.user, self.store_view_id, context=context
+                txn.cursor, txn.user, self.store_view_id, txn.context
             )
+
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
 
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+                txn.cursor, txn.user, order_states, context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
+                mag_carriers = load_json('carriers', 'shipping_methods')
 
-            order_data = load_json('orders', '100000001')
+                with patch(
+                        'magento.Customer', mock_customer_api(), create=True):
+                    partner = partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'],
+                        context
+                    )
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                # Create sale order using magento data
+                with patch('magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    mag_carriers = order_config_api.get_shipping_methods()
+
                 partner = partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
 
             magento_carrier_obj.create_all_using_magento_data(
-                txn.cursor, txn.user,
-                load_json('carriers', 'shipping_methods'),
-                context=context
+                txn.cursor, txn.user, mag_carriers, context=context
             )
 
             product_id = product_obj.search(
@@ -940,6 +1414,7 @@ class TestSale(TestBase):
                         txn.cursor, txn.user, store_view, context=context
                     )
 
+    @unittest.skipIf(not settings.MOCK, "requries mock settings")
     def test_0080_export_shipment_status_with_last_export_date_case2(self):
         """
         Tests that if last shipment export time is there then shipment status
@@ -954,6 +1429,7 @@ class TestSale(TestBase):
         product_obj = POOL.get('product.product')
         magento_carrier_obj = POOL.get('magento.instance.carrier')
         picking_obj = POOL.get('stock.picking')
+        website_obj = POOL.get('magento.instance.website')
 
         with Transaction().start(DB_NAME, USER, CONTEXT) as txn:
             self.setup_defaults(txn)
@@ -965,39 +1441,70 @@ class TestSale(TestBase):
             })
 
             store_view = store_view_obj.browse(
-                txn.cursor, txn.user, self.store_view_id, context=context
+                txn.cursor, txn.user, self.store_view_id, txn.context
             )
+
+            website = website_obj.browse(
+                txn.cursor, txn.user, self.website_id1, txn.context
+            )
+
+            if settings.MOCK:
+                order_states = load_json('order-states', 'all')
+            else:
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    order_states = order_config_api.get_states()
 
             magento_order_state_obj.create_all_using_magento_data(
-                txn.cursor, txn.user, load_json('order-states', 'all'),
-                context=context
+                txn.cursor, txn.user, order_states, context=context
             )
 
-            category_tree = load_json('categories', 'category_tree')
+            if settings.MOCK:
+                category_tree = load_json('categories', 'category_tree')
+            else:
+                with magento.Category(*settings.ARGS) as category_api:
+                    category_tree = category_api.tree(
+                        website.magento_root_category_id
+                    )
+
             category_obj.create_tree_using_magento_data(
                 txn.cursor, txn.user, category_tree, context
             )
 
-            orders = sale_obj.search(txn.cursor, txn.user, [], context=context)
-            self.assertEqual(len(orders), 0)
+            if settings.MOCK:
+                order_data = load_json('orders', '100000001')
+                mag_carriers = load_json('carriers', 'shipping_methods')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with OrderConfig(*settings.ARGS) as order_config_api:
+                    mag_carriers = order_config_api.get_shipping_methods()
 
-            order_data = load_json('orders', '100000001')
+            if settings.MOCK:
+                with patch(
+                        'magento.Customer', mock_customer_api(), create=True):
+                    partner = partner_obj.find_or_create_using_magento_id(
+                        txn.cursor, txn.user, order_data['customer_id'], context
+                    )
 
-            with patch('magento.Customer', mock_customer_api(), create=True):
+                # Create sale order using magento data
+                with patch(
+                        'magento.Product', mock_product_api(), create=True):
+                    order = sale_obj.find_or_create_using_magento_data(
+                        txn.cursor, txn.user, order_data, context=context
+                    )
+            else:
                 partner = partner_obj.find_or_create_using_magento_id(
                     txn.cursor, txn.user, order_data['customer_id'], context
                 )
 
-            # Create sale order using magento data
-            with patch('magento.Product', mock_product_api(), create=True):
+                # Create sale order using magento data
                 order = sale_obj.find_or_create_using_magento_data(
                     txn.cursor, txn.user, order_data, context=context
                 )
 
             magento_carrier_obj.create_all_using_magento_data(
-                txn.cursor, txn.user,
-                load_json('carriers', 'shipping_methods'),
-                context=context
+                txn.cursor, txn.user, mag_carriers, context=context
             )
 
             product_id = product_obj.search(
@@ -1058,8 +1565,14 @@ class TestSale(TestBase):
                     picking.write_date >= store_view.last_shipment_export_time
                 )
 
-            with patch('magento.Shipment', mock_shipment_api(), create=True):
-                # Export shipment status
+            if settings.MOCK:
+                with patch(
+                        'magento.Shipment', mock_shipment_api(), create=True):
+                    # Export shipment status
+                    store_view_obj.export_shipment_status_to_magento(
+                        txn.cursor, txn.user, store_view, context=context
+                    )
+            else:
                 store_view_obj.export_shipment_status_to_magento(
                     txn.cursor, txn.user, store_view, context=context
                 )

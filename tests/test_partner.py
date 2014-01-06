@@ -10,10 +10,12 @@
 from copy import deepcopy
 import unittest
 
+import magento
 from itsbroken.transaction import Transaction
 from itsbroken.testing import DB_NAME, POOL, USER, CONTEXT
 
 from test_base import TestBase, load_json
+import settings
 
 
 class TestPartner(TestBase):
@@ -35,33 +37,51 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website': self.website_id1
+                'magento_website': self.website_id1,
+                'magento_store_view': self.store_view_id,
             })
-            values = load_json('customers', '1')
 
-            partners = magento_partner_obj.search(
+            if settings.MOCK:
+                customer_data = load_json('customers', '1')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with magento.Customer(*settings.ARGS) as customer_api:
+                    if order_data.get('customer_id'):
+                        customer_data = customer_api.info(
+                            order_data['customer_id']
+                        )
+                    else:
+                        customer_data = {
+                            'firstname': order_data['customer_firstname'],
+                            'lastname': order_data['customer_lastname'],
+                            'email': order_data['customer_email'],
+                            'magento_id': 0
+                        }
+
+            partners_before_import = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
-            self.assertEqual(len(partners), 0)
 
             # Create partner
             partner = partner_obj.find_or_create(
-                txn.cursor, txn.user, values, context
+                txn.cursor, txn.user, customer_data, context
             )
             self.assert_(partner)
 
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('email', '=', values['email'])
+                        ('email', '=', customer_data['email'])
                     ], context=context
                 )
             )
-            partners = magento_partner_obj.search(
+            partners_after_import = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
 
-            self.assertEqual(len(partners), 1)
+            self.assertTrue(partners_after_import > partners_before_import)
 
     def test0020_create_partner_for_same_website(self):
         """
@@ -76,85 +96,125 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website': self.website_id1
+                'magento_website': self.website_id1,
+                'magento_store_view': self.store_view_id,
             })
 
-            values = load_json('customers', '1')
+            initial_partners = magento_partner_obj.search(
+                txn.cursor, txn.user, [], context=context
+            )
+
+            if settings.MOCK:
+                customer_data = load_json('customers', '1')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with magento.Customer(*settings.ARGS) as customer_api:
+                    if order_data.get('customer_id'):
+                        customer_data = customer_api.info(
+                            order_data['customer_id']
+                        )
+                    else:
+                        customer_data = {
+                            'firstname': order_data['customer_firstname'],
+                            'lastname': order_data['customer_lastname'],
+                            'email': order_data['customer_email'],
+                            'magento_id': 0
+                        }
 
             partner = partner_obj.find_or_create(
-                txn.cursor, txn.user, values, context
+                txn.cursor, txn.user, customer_data, context
             )
             self.assert_(partner)
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('email', '=', values['email'])
+                        ('email', '=', customer_data['email'])
                     ], context=context
                 )
             )
             partners = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
-            self.assertEqual(len(partners), 1)
-
-            values = load_json('customers', '1')
+            self.assertEqual(len(partners), len(initial_partners) + 1)
 
             # Create partner with same magento_id and website_id it will not
             # create new one
             partner_obj.find_or_create(
-                txn.cursor, txn.user, values, context
+                txn.cursor, txn.user, customer_data, context
             )
             partners = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
-            self.assertEqual(len(partners), 1)
+            self.assertEqual(len(partners), len(initial_partners) + 1)
 
             # Create partner with different website
             context.update({
                 'magento_website': self.website_id2
             })
-            values = load_json('customers', '1')
 
             partner = partner_obj.find_or_create(
-                txn.cursor, txn.user, values, context
+                txn.cursor, txn.user, customer_data, context
             )
             self.assert_(partner)
 
             partners = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
-            self.assertEqual(len(partners), 2)
+            self.assertEqual(len(partners), len(initial_partners) + 2)
 
             # Create partner with different magento_id
             context.update({
                 'magento_website': self.website_id1
             })
 
-            values = load_json('customers', '2')
+            if settings.MOCK:
+                customer_data = load_json('customers', '2')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                with magento.Customer(*settings.ARGS) as customer_api:
+                    for order in orders:
+                        if order.get('customer_id'):
+                            # Search for different cusotmer
+                            if order_data['customer_id'] == \
+                                    order['customer_id']:
+                                continue
+                            customer_data = customer_api.info(
+                                order['customer_id']
+                            )
+                        else:
+                            customer_data = {
+                                'firstname': order['customer_firstname'],
+                                'lastname': order['customer_lastname'],
+                                'email': order['customer_email'],
+                                'magento_id': 0
+                            }
 
             self.assertFalse(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('email', '=', values['email'])
+                        ('email', '=', customer_data['email'])
                     ], context=context
                 )
             )
 
             partner = partner_obj.find_or_create(
-                txn.cursor, txn.user, values, context
+                txn.cursor, txn.user, customer_data, context
             )
             self.assert_(partner)
             self.assertTrue(
                 partner_obj.search(
                     txn.cursor, txn.user, [
-                        ('email', '=', values['email'])
+                        ('email', '=', customer_data['email'])
                     ], context=context
                 )
             )
             partners = magento_partner_obj.search(
                 txn.cursor, txn.user, [], context=context
             )
-            self.assertEqual(len(partners), 3)
+            self.assertEqual(len(partners), len(initial_partners) + 3)
 
     def test0030_create_address(self):
         """
@@ -168,16 +228,35 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website': self.website_id1
+                'magento_website': self.website_id1,
+                'magento_store_view': self.store_view_id,
             })
-            customer_data = load_json('customers', '1')
+
+            if settings.MOCK:
+                customer_data = load_json('customers', '1')
+                address_data = load_json('addresses', '1')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = order_api.list()
+                    order_data = order_api.info(orders[0]['increment_id'])
+                with magento.Customer(*settings.ARGS) as customer_api:
+                    if order_data.get('customer_id'):
+                        customer_data = customer_api.info(
+                            order_data['customer_id']
+                        )
+                    else:
+                        customer_data = {
+                            'firstname': order_data['customer_firstname'],
+                            'lastname': order_data['customer_lastname'],
+                            'email': order_data['customer_email'],
+                            'magento_id': 0
+                        }
+                    address_data = order_data['billing_address']
 
             # Create partner
             partner = partner_obj.find_or_create(
                 txn.cursor, txn.user, customer_data, context
             )
-
-            address_data = load_json('addresses', '1')
 
             partners_before_address = partner_obj.search(
                 txn.cursor, txn.user, [], context=context, count=True
@@ -212,16 +291,62 @@ class TestPartner(TestBase):
 
             context = deepcopy(CONTEXT)
             context.update({
-                'magento_website': self.website_id1
+                'magento_website': self.website_id1,
+                'magento_store_view': self.store_view_id,
             })
-            customer_data = load_json('customers', '1')
+
+            if settings.MOCK:
+                customer_data = load_json('customers', '1')
+                address_data = load_json('addresses', '1')
+                address_data2 = load_json('addresses', '1b')
+                address_data3 = load_json('addresses', '1c')
+                address_data4 = load_json('addresses', '1d')
+                address_data5 = load_json('addresses', '1e')
+            else:
+                with magento.Order(*settings.ARGS) as order_api:
+                    orders = [
+                        order_api.info(order['increment_id'])
+                            for order in order_api.list()
+                    ]
+                    order_data = orders[0]
+                with magento.Customer(*settings.ARGS) as customer_api:
+                    if order_data.get('customer_id'):
+                        customer_data = customer_api.info(
+                            order_data['customer_id']
+                        )
+                    else:
+                        customer_data = {
+                            'firstname': order_data['customer_firstname'],
+                            'lastname': order_data['customer_lastname'],
+                            'email': order_data['customer_email'],
+                            'magento_id': 0
+                        }
+                    address_data = order_data['billing_address']
+                    for order in orders:
+                        # Search for address with different country
+                        if order['billing_address']['country_id'] != \
+                                address_data['country_id']:
+                            address_data2 = order['billing_address']
+
+                        # Search for address with different state
+                        if order['billing_address']['region'] != \
+                                address_data['region']:
+                            address_data3 = order['billing_address']
+
+                        # Search for address with different telephone
+                        if order['billing_address']['telephone'] != \
+                                address_data['telephone']:
+                            address_data4 = order['billing_address']
+
+                        # Search for address with different street
+                        if order['billing_address']['street'] != \
+                                address_data['street']:
+                            address_data5 = order['billing_address']
 
             # Create partner
             partner = partner_obj.find_or_create(
                 txn.cursor, txn.user, customer_data, context
             )
-
-            address_data = load_json('addresses', '1')
 
             address = partner_obj.\
                 find_or_create_address_as_partner_using_magento_data(
@@ -231,42 +356,42 @@ class TestPartner(TestBase):
             # Same address imported again
             self.assertTrue(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1')
+                    txn.cursor, txn.user, address, address_data
                 )
             )
 
             # Exactly similar address imported again
             self.assertTrue(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1a')
+                    txn.cursor, txn.user, address, address_data
                 )
             )
 
             # Similar with different country
             self.assertFalse(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1b')
+                    txn.cursor, txn.user, address, address_data2
                 )
             )
 
             # Similar with different state
             self.assertFalse(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1c')
+                    txn.cursor, txn.user, address, address_data3
                 )
             )
 
             # Similar with different telephone
             self.assertFalse(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1d')
+                    txn.cursor, txn.user, address, address_data4
                 )
             )
 
             # Similar with different street
             self.assertFalse(
                 partner_obj.match_address_with_magento_data(
-                    txn.cursor, txn.user, address, load_json('addresses', '1e')
+                    txn.cursor, txn.user, address, address_data5
                 )
             )
 
