@@ -88,15 +88,22 @@ System >> Magento Connect >> Magento Connect Manager
 
 **Step 2: Installation of Magento Integration [OpenERP module]**
 
-**Preparation of the Python environment**
+**Setup Python environment**
 
-1. If not already installed by the default python installation, download the pycountry module and install it in your python directory
+1. If not already installed by the default python installation, download the 
+   pycountry module and install it in your python directory
 
-2. Download the `magento module <https://github.com/openlabs/magento>`_ and install it in your python directory (*)
+2. Download the `magento module <https://github.com/openlabs/magento>`_ and 
+   install it in your python directory (*)
 
-(*) it seems that in linux installations, Magento Integration takes care of 'magento module' and installs it when running the Magento Integration setup (see .5 below). So you have to install it yoursefl only if you are working under windows systems because for some reason Magento Integration lacks to install the 'magento module' (to be confirmed by developers)
+(*) it seems that in linux installations, Magento Integration takes care of 
+'magento module' and installs it when running the Magento Integration setup 
+(see .5 below). So you have to install it yourself only if you are working 
+under windows systems because for some reason Magento Integration lacks to 
+install the 'magento module' (to be confirmed by developers)
 
-(if your openERP is installed on a Windows system, copy the above modules from YourPythonDir\\Lib\\site-packages to YourOpenErpDir\\Server\\server)
+(if your openERP is installed on a Windows systems, copy the above modules from
+YourPythonDir\\Lib\\site-packages to YourOpenErpDir\\Server\\server)
 
 **Downloading the magento_integration module**
 
