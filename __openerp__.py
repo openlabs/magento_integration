@@ -40,6 +40,7 @@ This will import the following:
         'magento.xml',
         'sale.xml',
         'account.xml',
+        'security/ir.model.access.csv',
     ],
     'css': [],
     'images': [],
