@@ -1,6 +1,8 @@
 Magento OpenERP Integration
 ===========================
 
+.. image:: https://travis-ci.org/openlabs/magento_integration.png?branch=develop
+    :target: https://travis-ci.org/openlabs/magento_integration
 
 This is a developer preview of Magento OpenERP connector, combining
 the latest stable versions of the e-commerce platform and ERP software,
@@ -10,15 +12,14 @@ from scratch. The Magento OpenERP connector is fully tested automatically
 for regressions. The developers at Openlabs have followed the policy of
 ‘Simple is Beautiful’ for the creation of this connector.
 
+.. image:: static/src/img/icon.png
+
 The Magento OpenERP connector was created out of respect for the customers
 of Openlabs and the users around the world, who were left stranded after
 the release of OpenERP version 7. The primary motive was to create a simpler,
-faster and clean connector unlike the previous ones. The connector was
-created in the time frame of one week and is available for testing free of
-charge.
+faster and clean connector unlike the previous ones. The connector is available
+for testing free of charge.
 
-
-.. image:: static/src/img/icon.png
 
 Features of Magento OpenERP connector
 --------------------------------------
@@ -43,12 +44,12 @@ Features of Magento OpenERP connector
   by unit test cases which check the functionality with different order and
   product types and other combinations. The testing ensures that the
   connector behavior is predictable and active development does not hinder
-  the working features. You can see it for yourself.
+  the working features. You can 
+  `see it <https://travis-ci.org/openlabs/magento_integration>`_ for yourself.
 
-.. image:: https://travis-ci.org/openlabs/magento-integration.png?branch=develop
 
 The connector is still missing a few functions, which have been added to
-our issues list. 
+our `issues list <https://github.com/openlabs/magento_integration/issues>`_. 
 
 Contributions and suggestions to improve the connector are always welcome,
 courtesy to the truly 100% Open Source nature of the software.
@@ -72,6 +73,7 @@ You can also reach us at `support@openlabs.co.in <mailto:support@openlabs.co.in>
 or talk to a human at +1 813 793 6736. Please do not email any of the Openlabs
 developers directly with issues or questions as you're more likely to get an
 answer if you create a github issue or email us at the above address.
+
 You can also mail us your ideas and suggestions about any changes.
 
 About Us
