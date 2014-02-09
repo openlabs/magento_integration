@@ -4,7 +4,7 @@ Magento OpenERP Integration
 .. image:: https://travis-ci.org/openlabs/magento_integration.png?branch=develop
     :target: https://travis-ci.org/openlabs/magento_integration
 
-This is a developer preview of Magento OpenERP connector, combining
+This is a stable version of Magento OpenERP connector II, combining
 the latest stable versions of the e-commerce platform and ERP software,
 Magento 1.7 and OpenERP 7 respectively. This connector eradicates the
 earlier problems of the Magento OpenERP connector as the code is written
@@ -18,7 +18,7 @@ The Magento OpenERP connector was created out of respect for the customers
 of Openlabs and the users around the world, who were left stranded after
 the release of OpenERP version 7. The primary motive was to create a simpler,
 faster and clean connector unlike the previous ones. The connector is available
-for testing free of charge.
+free of charge.
 
 
 Features of Magento OpenERP connector
@@ -48,7 +48,7 @@ Features of Magento OpenERP connector
   `see it <https://travis-ci.org/openlabs/magento_integration>`_ for yourself.
 
 
-The connector is still missing a few functions, which have been added to
+New features and functionality to be implemented have been added to
 our `issues list <https://github.com/openlabs/magento_integration/issues>`_. 
 
 Contributions and suggestions to improve the connector are always welcome,
