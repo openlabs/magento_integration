@@ -3,7 +3,7 @@
 {
     'name': 'Magento Integration',
     'author': 'Openlabs Technologies & Consulting Pvt Ltd.',
-    'version': '1.0',
+    'version': '2.0dev',
     'depends': [
         'base',
         'sale',
