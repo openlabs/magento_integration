@@ -125,6 +125,15 @@ YourPythonDir\\Lib\\site-packages to YourOpenErpDir\\Server\\server)
 3. If the module is downloaded as a zip, extract the module which will
    give a directory.
 
+   .. warning::
+
+      The directory name of the extracted contents should be
+      `magento_integration`. The module will not work otherwise as OpenERP
+      identifies modules by the folder name.
+
+      If you are downloading the source from github, the folder name
+      created includes the branch name like `magento_integration-develop`.
+
 4. Copy this directory to **addons** folder of openerp. [Advanced
    users can update the addons path to add this module's parent folder in their
    server config file.]
