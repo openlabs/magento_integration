@@ -7,6 +7,8 @@ services:
   - postgresql
 before_script:
   - psql -c 'create database myapp_test;' -U postgres
+before_install:
+  - sudo apt-get install python-lxml
 install:
 # OpenERP does not specify the version of pyparsing and the later
 # version only work with py3k
