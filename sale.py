@@ -4,7 +4,7 @@
 
     Sale
 
-    :copyright: (c) 2013 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: (c) 2013-2014 by Openlabs Technologies & Consulting (P) Limited
     :license: AGPLv3, see LICENSE for more details.
 """
 import xmlrpclib
@@ -424,7 +424,7 @@ class Sale(osv.Model):
                     'product_uom':
                         website_obj.get_default_uom(
                             cursor, user, context
-                        ).id,
+                    ).id,
                     'product_uom_qty': float(item['qty_ordered']),
                     'magento_notes': item['product_options'],
                     'type': 'make_to_order',
@@ -433,7 +433,7 @@ class Sale(osv.Model):
                         product_obj.find_or_create_using_magento_id(
                             cursor, user, item['product_id'],
                             context=context
-                        ).id
+                    ).id
                 }
                 line_data.append((0, 0, values))
 
@@ -517,7 +517,7 @@ class Sale(osv.Model):
             'product_uom':
                 website_obj.get_default_uom(
                     cursor, user, context
-                ).id,
+            ).id,
             'tax_id': [(6, 0, taxes)],
             'magento_notes': ' - '.join([
                 order_data['shipping_method'],
@@ -544,7 +544,7 @@ class Sale(osv.Model):
             'product_uom':
                 website_obj.get_default_uom(
                     cursor, user, context
-                ).id,
+            ).id,
             'magento_notes': order_data['discount_description'],
         })
 
