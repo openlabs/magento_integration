@@ -36,8 +36,9 @@ class Instance(osv.Model):
         api_user=fields.char('API User', required=True, size=50),
         api_key=fields.char('API Password / Key', required=True, size=100),
         order_prefix=fields.char(
-            'Sale Order Prefix', size=10, help=
-            "This helps to distinguish between orders from different instances"
+            'Sale Order Prefix', size=10,
+            help="This helps to distinguish between "
+                 "orders from different instances"
         ),
         active=fields.boolean('Active'),
         company=fields.many2one(
