@@ -76,6 +76,16 @@ answer if you create a github issue or email us at the above address.
 
 You can also mail us your ideas and suggestions about any changes.
 
+Professional Support
+--------------------
+
+This module is professionally supported by `Openlabs <http://www.openlabs.co.in>`_.
+If you are looking for on-site teaching or consulting support, contact our
+`sales <mailto:sales@openlabs.co.in>`_ team.
+
+Alternatively, you could purchase a support pack for help in configuring and
+setting up the connector. `View details <http://www.openlabs.co.in/article/magento-erp-integration>`_
+
 About Us
 --------
 
