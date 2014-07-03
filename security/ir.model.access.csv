@@ -20,4 +20,4 @@ magento_store_store_view.import_orders,magento_store_store_view.import_orders,ma
 magento_website_partner,magento_website_partner,magento_integration.model_magento_website_partner,base.group_sale_salesman,1,0,0,0
 magento_website_product,magento_website_product,magento_integration.model_magento_website_product,base.group_sale_salesman,1,0,0,0
 magento_website_store,magento_website_store,magento_integration.model_magento_website_store,base.group_sale_salesman,1,0,0,0
-
+access_product_price_tier,access_product_price_tier,model_product_price_tier,base.group_sale_salesman,1,0,0,0
